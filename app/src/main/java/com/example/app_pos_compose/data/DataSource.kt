@@ -2,34 +2,27 @@ package com.example.app_pos_compose.data
 
 object TableSource {
     val tables = listOf(
-        Table(0, "10.00"),
-        Table(1, "10.00"),
-        Table(2, "10.00"),
+        Table(0, "0.00"),
+        Table(1, "0.00"),
+        Table(2, "0.00"),
+        Table(3, "0.00"),
+        Table(4, "0.00"),
+        Table(5, "0.00"),
+        Table(6, "0.00"),
+        Table(7, "0.00"),
+        Table(8,"0.00"),
+        Table(9, "0.00"),
 
-        Table(3, "10.00"),
-        Table(4, "10.00"),
-        Table(5, "10.00"),
-
-        Table(6, "10.00"),
-        Table(7, "10.00"),
-        Table(8,"10.00"),
-
-        Table(9, "10.00"),
-        Table(10, "10.00"),
-        Table(11, "10.00"),
-
-        Table(12, "10.00"),
-        Table(13, "10.00"),
-        Table(14, "10.00"),
-
-        Table(15, "10.00"),
-        Table(16, "10.00"),
-        Table(17, "10.00"),
-
-        Table(18, "10.00"),
-        Table(19, "10.00"),
-
-
+        Table(10, "0.00"),
+        Table(11, "0.00"),
+        Table(12, "0.00"),
+        Table(13, "0.00"),
+        Table(14, "0.00"),
+        Table(15, "0.00"),
+        Table(16, "0.00"),
+        Table(17, "0.00"),
+        Table(18, "0.00"),
+        Table(19, "0.00"),
     )
 }
 

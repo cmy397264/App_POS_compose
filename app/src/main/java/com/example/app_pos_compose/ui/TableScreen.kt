@@ -24,17 +24,57 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.app_pos_compose.data.OrderSource
 import com.example.app_pos_compose.data.Table
 
+enum class NavScreen{
+    Main,
+    Order,
+    Pay,
+}
 
 @Composable
 fun TableUi(
     tables : List<Table>,
     viewModel: UiViewModel,
+    navController: NavHostController = rememberNavController()
 ){
-    val UiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    NavHost(
+        navController = navController,
+        startDestination = NavScreen.Main.name,
+    ){
+        composable(NavScreen.Main.name){
+            TableList(
+                tables = tables,
+                viewModel = viewModel,
+                uiState = uiState,
+                navController = navController)
+        }
+        composable(NavScreen.Order.name){
+            MenuUi(
+                uiState = uiState,
+                onCancelButtonClicked = { navController.popBackStack(NavScreen.Main.name, inclusive = false) }
+            )
+        }
+        composable(NavScreen.Pay.name){
 
+        }
+    }
+}
+
+@Composable
+fun TableList(
+    tables: List<Table>,
+    viewModel: UiViewModel,
+    uiState: UiState,
+    navController: NavController
+) {
     Column{
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
@@ -44,7 +84,7 @@ fun TableUi(
                 TableCard(table = tables[index], viewModel)
             }
         }
-        DetailTableUi(UiState.currentSelectedTable)
+        TableInfoUi(uiState.currentSelectedTable, navController)
     }
 }
 
@@ -82,8 +122,9 @@ fun TableCard(
 }
 
 @Composable
-fun DetailTableUi(
+fun TableInfoUi(
     currentSelectedTable: Int?,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     when (currentSelectedTable) {
@@ -128,7 +169,9 @@ fun DetailTableUi(
                         )
                 ) {
                     FloatingActionButton(
-                        onClick = { },
+                        onClick = {
+                            navController.navigate(NavScreen.Order.name)
+                        },
                         modifier
                             .padding(10.dp)
                     ) {
@@ -136,7 +179,9 @@ fun DetailTableUi(
                     }
 
                     FloatingActionButton(
-                        onClick = { },
+                        onClick = {
+                            navController.navigate(NavScreen.Pay.name)
+                        },
                         modifier
                             .padding(10.dp)
                     ) {

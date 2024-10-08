@@ -11,7 +11,19 @@ class UiViewModel : ViewModel() {
 
     fun updateTableNum(table : Int){
         _uiState.value = _uiState.value.copy(
-            currentSelectedTable = table
+            currentSelectedTable = table,
+            currentSelectedTab = _uiState.value.currentSelectedTab
         )
+    }
+
+    fun updateTab(tab : Int){
+        _uiState.value = _uiState.value.copy(
+            currentSelectedTable = _uiState.value.currentSelectedTable,
+            currentSelectedTab = tab
+        )
+    }
+
+    fun updateIsMain(isMain : Boolean){
+        _uiState.value.isMain = isMain
     }
 }
