@@ -25,12 +25,12 @@ import androidx.compose.ui.unit.dp
 @Preview(showBackground = true)
 @Composable
 fun MenuUiPreview(){
-    MenuUi(uiState = UiState())
+    MenuUi()
 }
 
 @Composable
 fun MenuUi(
-    uiState: UiState,
+    tableNum : Int? = null,
     onCancelButtonClicked: () -> Unit = {},
     modifier: Modifier = Modifier
 ){
@@ -54,7 +54,7 @@ fun MenuUi(
             }
 
             Text(
-                text = "{${uiState.currentSelectedTable}}"
+                text = "{${tableNum}}"
             )
             LazyRow(
                 modifier

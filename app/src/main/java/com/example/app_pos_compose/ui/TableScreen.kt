@@ -58,8 +58,9 @@ fun TableUi(
         }
         composable(NavScreen.Order.name){
             MenuUi(
-                uiState = uiState,
-                onCancelButtonClicked = { navController.popBackStack(NavScreen.Main.name, inclusive = false) }
+                tableNum = uiState.currentSelectedTable,
+                onCancelButtonClicked = {
+                    navController.popBackStack(NavScreen.Main.name, inclusive = false) }
             )
         }
         composable(NavScreen.Pay.name){

@@ -27,3 +27,9 @@ class UiViewModel : ViewModel() {
         _uiState.value.isMain = isMain
     }
 }
+
+data class UiState(
+    var currentSelectedTab: Int = 0,
+    var currentSelectedTable : Int? = null,
+    var isMain : Boolean = true
+)

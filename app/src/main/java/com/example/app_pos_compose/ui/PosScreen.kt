@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.app_pos_compose.AppViewModelProvider
 import com.example.app_pos_compose.data.TableSource
 
 @Preview(showBackground = true)
@@ -34,7 +36,7 @@ enum class TabNum(i: Int) {
 
 @Composable
 fun POSApp(
-    viewModel: UiViewModel = UiViewModel(),
+    viewModel: UiViewModel = viewModel(factory = AppViewModelProvider.Factory),
     modifier: Modifier = Modifier
 ){
     val uiState = viewModel.uiState.collectAsState()
@@ -56,10 +58,15 @@ fun POSApp(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            if(uiState.value.isMain) TabBar(viewModel)
+            if(uiState.value.isMain) {
+                TabBar(
+                    onTabClick = {tab -> viewModel.updateTab(tab = tab)},
+                    viewModel = viewModel)
+            }
             when (uiState.value.currentSelectedTab) {
                 TabNum.Table.ordinal -> {
                     TableUi(
+
                         tables = TableSource.tables,
                         viewModel = viewModel
                     )
@@ -70,10 +77,7 @@ fun POSApp(
                 }
 
                 TabNum.Setting.ordinal -> {
-                    SettingUi(
-                        viewModel,
-                        uiState
-                    )
+                    SettingUi()
                 }
             }
         }
@@ -82,6 +86,7 @@ fun POSApp(
 
 @Composable
 fun TabBar(
+    onTabClick : (Int) -> Unit,
     viewModel: UiViewModel,
     modifier: Modifier = Modifier
 ){
@@ -98,7 +103,7 @@ fun TabBar(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .width(100.dp)
-                .clickable { viewModel.updateTab(TabNum.Table.ordinal) }
+                .clickable { onTabClick(TabNum.Table.ordinal) }
         )
         Text(
             text = "receipt",
