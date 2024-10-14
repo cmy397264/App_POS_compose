@@ -39,9 +39,7 @@ fun MenuUi(
             .padding(horizontal = 10.dp)
     ) {
         Column {
-            Text(
-                text = "메뉴"
-            )
+            Text(text = "메뉴")
             LazyVerticalGrid(
                 columns = GridCells.Fixed(4),
                 contentPadding = PaddingValues(10.dp),
@@ -52,20 +50,12 @@ fun MenuUi(
             ) {
 
             }
-
-            Text(
-                text = "{${tableNum}}"
-            )
+            Text(text = "{${tableNum}}")
             LazyRow(
-                modifier
-                    .fillMaxWidth()
+                modifier.fillMaxWidth()
                     .height(300.dp),
-            ) {
-
-            }
-            Text(
-                text = "총 원",
-            )
+            ) {}
+            Text(text = "총 원",)
         }
         Column(
             modifier
