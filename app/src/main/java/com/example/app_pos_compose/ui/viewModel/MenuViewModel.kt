@@ -1,22 +1,23 @@
-package com.example.app_pos_compose.data
+package com.example.app_pos_compose.ui.viewModel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.Flow
+import com.example.app_pos_compose.data.Menu
+import com.example.app_pos_compose.data.MenuRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-class MenuViewModel(private val roomRepository: RoomRepository) : ViewModel() {
-    var menuUiState by mutableStateOf(MenuUiState()) // 데이터 저장에 사용
+class MenuViewModel(private val roomRepository: MenuRepository) : ViewModel() {
+    var menuUiState by mutableStateOf(MenuUiState()) // 데이터 임시 저장에 사용
         private set
 
     val menuListUiState : StateFlow<MenuListUiState> =
-        roomRepository.getAllMenu().map { MenuListUiState(it)}
+        roomRepository.getAllItems().map { MenuListUiState(it) }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
@@ -35,17 +36,17 @@ class MenuViewModel(private val roomRepository: RoomRepository) : ViewModel() {
 
     suspend fun saveMenu(){
         if(validateInput()){
-            roomRepository.insertMenu(menuUiState.menuDetails.toMenu())
+            roomRepository.insertItem(menuUiState.menuDetails.toMenu())
         }
     }
 
     suspend fun deleteMenu(menu: Menu){
-        roomRepository.deleteMenu(menu)
+        roomRepository.deleteItem(menu)
     }
 
     suspend fun updateMenu(){
         if(validateInput(menuUiState.menuDetails)){
-            roomRepository.updateMenu(menuUiState.menuDetails.toMenu())
+            roomRepository.updateItem(menuUiState.menuDetails.toMenu())
         }
     }
 }

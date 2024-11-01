@@ -16,30 +16,26 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.app_pos_compose.AppViewModelProvider
-import com.example.app_pos_compose.data.TableSource
+import com.example.app_pos_compose.ui.viewModel.TableViewModel
+import com.example.app_pos_compose.ui.viewModel.UiViewModel
 
-@Preview(showBackground = true)
-@Composable
-fun PosPreview(){
-    POSApp()
-}
-
-enum class TabNum(i: Int) {
-    Table(0),
-    Receipt(1),
-    Setting(2)
+enum class TabNum {
+    Table,
+    Receipt,
+    Setting
 }
 
 @Composable
-fun POSApp(
-    viewModel: UiViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    modifier: Modifier = Modifier
+fun MainScreen(
+    modifier: Modifier = Modifier,
+    uiViewModel: UiViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    tableViewModel: TableViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ){
-    val uiState = viewModel.uiState.collectAsState()
+    val uiState = uiViewModel.uiState.collectAsState()
+
     Scaffold(
         topBar = {
             Row(modifier = Modifier
@@ -60,16 +56,13 @@ fun POSApp(
         ) {
             if(uiState.value.isMain) {
                 TabBar(
-                    onTabClick = {tab -> viewModel.updateTab(tab = tab)},
-                    viewModel = viewModel)
+                    onTabClick = {tab -> uiViewModel.updateTab(tab = tab)},
+                    viewModel = uiViewModel
+                )
             }
             when (uiState.value.currentSelectedTab) {
                 TabNum.Table.ordinal -> {
-                    TableUi(
-
-                        tables = TableSource.tables,
-                        viewModel = viewModel
-                    )
+                    TableUi()
                 }
 
                 TabNum.Receipt.ordinal -> {
@@ -77,7 +70,9 @@ fun POSApp(
                 }
 
                 TabNum.Setting.ordinal -> {
-                    SettingUi()
+                    SettingUi(
+                        tableViewModel = tableViewModel
+                    )
                 }
             }
         }
@@ -96,7 +91,6 @@ fun TabBar(
             .padding(vertical = 10.dp)
             .border(0.dp, color = androidx.compose.ui.graphics.Color.Black),
         horizontalArrangement = Arrangement.SpaceEvenly
-
     ){
         Text(
             text = "table",

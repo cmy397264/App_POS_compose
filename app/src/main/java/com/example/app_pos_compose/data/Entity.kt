@@ -13,12 +13,15 @@ data class Menu(
 
 @Entity(tableName = "table")
 data class Table(
+    @PrimaryKey(autoGenerate = true)
     val id: Int,
+    var tableNum : Int,
     var price : String
 )
 
 @Entity(tableName = "order")
 data class Order (
+    @PrimaryKey(autoGenerate = true)
     val id : Int,
     //val tableId : Int,
     val menu : String,

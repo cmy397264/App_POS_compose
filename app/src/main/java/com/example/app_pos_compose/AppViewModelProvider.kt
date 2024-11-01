@@ -4,20 +4,24 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.app_pos_compose.data.MenuViewModel
-import com.example.app_pos_compose.ui.UiViewModel
+import com.example.app_pos_compose.ui.viewModel.MenuViewModel
+import com.example.app_pos_compose.ui.viewModel.TableViewModel
+import com.example.app_pos_compose.ui.viewModel.UiViewModel
 
 object AppViewModelProvider{
     val Factory = viewModelFactory {
         initializer {
-            MenuViewModel(menuApplication().container.roomRepository)
+            MenuViewModel(PosApplication().container.MenuRepository)
         }
 
+        initializer {
+            TableViewModel(PosApplication().container.TableRepository)
+        }
         initializer {
             UiViewModel()
         }
     }
 }
 
-fun CreationExtras.menuApplication(): MenuApplication =
-    (this[AndroidViewModelFactory.APPLICATION_KEY] as MenuApplication)
+fun CreationExtras.PosApplication(): PosApplication =
+    (this[AndroidViewModelFactory.APPLICATION_KEY] as PosApplication)

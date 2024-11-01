@@ -1,7 +1,6 @@
 package com.example.app_pos_compose.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,25 +39,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.app_pos_compose.AppViewModelProvider
 import com.example.app_pos_compose.data.Menu
-import com.example.app_pos_compose.data.MenuDetails
-import com.example.app_pos_compose.data.MenuViewModel
-import com.example.app_pos_compose.data.toMenuDetails
+import com.example.app_pos_compose.ui.viewModel.MenuDetails
+import com.example.app_pos_compose.ui.viewModel.MenuViewModel
+import com.example.app_pos_compose.ui.viewModel.TableViewModel
+import com.example.app_pos_compose.ui.viewModel.toMenuDetails
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingUi(
     modifier: Modifier = Modifier,
-    viewModel: MenuViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    menuViewModel: MenuViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    tableViewModel: TableViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val menuListUiState = viewModel.menuListUiState.collectAsState()
+    val menuListUiState = menuViewModel.menuListUiState.collectAsState().value.menuList
 
     var openMenuSettingDialog by remember { mutableStateOf(false) }
     var openDeleteCardDialog by remember { mutableStateOf(false) }
@@ -65,64 +66,50 @@ fun SettingUi(
     var selectedMenu by remember { mutableIntStateOf(0) }
 
     Box(
-        modifier
-            .fillMaxSize()
+        modifier.fillMaxSize()
             .padding(horizontal = 10.dp)
     ) {
         Column {
-            Text(text = "메뉴 추가 및 삭제")
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(10.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(500.dp)
-                    .border(0.dp, color = Color.Black)
-            ) {
-                items(menuListUiState.value.menuList.size) { index ->
-                    MenuCard(
-                        menu = menuListUiState.value.menuList[index],
-                        onEditClick = {
-                            coroutineScope.launch {
-                                viewModel.updateUiState(menuListUiState.value.menuList[index].toMenuDetails())
-                                isEdit = true
-                                openMenuSettingDialog = true
-                            }
-                        },
-                        onDeleteClick = {
-                            selectedMenu = index
-                            openDeleteCardDialog = true
-                        })
+            TableSettingUi(tableViewModel = tableViewModel)
+            MenuSettingUi(
+                menuList = menuListUiState,
+                onEditClick = { index : Int ->
+                    coroutineScope.launch {
+                        menuViewModel.updateUiState(menuListUiState[index].toMenuDetails())
+                        isEdit = true
+                        openMenuSettingDialog = true
+                    }
+                },
+                onDeleteClick = { index : Int ->
+                    selectedMenu = index
+                    openDeleteCardDialog = true
                 }
-            }
+            )
         }
         FloatingActionButton(
             onClick = {
-                viewModel.updateUiState()
+                menuViewModel.updateUiState()
                 isEdit = false
                 openMenuSettingDialog = true },
-            modifier
-                .align(Alignment.BottomEnd)
-                .padding(10.dp)
-        ) {
-            Text("메뉴추가")
-        }
+            modifier.align(Alignment.BottomEnd)
+                .padding(10.dp))
+        { Text("메뉴추가") }
     }
 
     if (openMenuSettingDialog) {
         MenuSettingDialog(
             isEdit = isEdit,
-            menuDetails = viewModel.menuUiState.menuDetails,
-            onValueChange = viewModel::updateUiState,
+            menuDetails = menuViewModel.menuUiState.menuDetails,
+            onValueChange = menuViewModel::updateUiState,
             onSaveClick = {
                 coroutineScope.launch {
-                    viewModel.saveMenu()
+                    menuViewModel.saveMenu()
                     openMenuSettingDialog = false
                 }
             },
             onEditClick = {
                 coroutineScope.launch {
-                    viewModel.updateMenu()
+                    menuViewModel.updateMenu()
                     openMenuSettingDialog = false
                 }
             },
@@ -134,12 +121,74 @@ fun SettingUi(
         DeleteAlertDialog(
             onConfirmClick = {
                 coroutineScope.launch {
-                    viewModel.deleteMenu(menuListUiState.value.menuList[selectedMenu])
+                    menuViewModel.deleteMenu(menuListUiState[selectedMenu])
                     openDeleteCardDialog = false
                 }
             },
             onDismissClick = { openDeleteCardDialog = false }
         )
+    }
+}
+
+@Composable
+fun MenuSettingUi(
+    menuList: List<Menu>,
+    onEditClick: (Int) -> Unit,
+    onDeleteClick: (Int) -> Unit,
+){
+    Text(text = "메뉴 추가 및 삭제")
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        contentPadding = PaddingValues(10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(500.dp)
+    ) {
+        items(menuList.size) { index ->
+            MenuCard(
+                menu = menuList[index],
+                onEditClick = {onEditClick(index)},
+                onDeleteClick = {onDeleteClick(index)}
+            )
+        }
+    }
+}
+
+@Composable
+fun TableSettingUi(
+    modifier: Modifier = Modifier,
+    tableViewModel: TableViewModel,
+){
+    val tableCount = tableViewModel.tableListUiState.collectAsState().value.tableList.size
+
+    Text(text = "테이블 추가 및 삭제")
+    Row(
+        modifier = modifier.fillMaxWidth()
+            .height(70.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = tableViewModel.uiState.tableCount,
+            onValueChange = { newCount->
+                tableViewModel.updateTableCount(newCount)},
+            enabled = true,
+            singleLine = true,
+            label = { Text("현재 테이블 수 : $tableCount") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = modifier.width(200.dp)
+        )
+        Button(
+            onClick = {
+                val newCount = tableViewModel.isNullOrIntTableCount()
+                val isInsert = tableCount < newCount
+                tableViewModel.insertOrDeleteTable(isInsert, newCount)
+            },
+            enabled = tableCount.toString() != tableViewModel.uiState.tableCount,
+            modifier = modifier
+        ) {
+            Text("apply")
+        }
     }
 }
 
@@ -244,7 +293,6 @@ fun MenuCard(
 
 @Composable
 fun DeleteAlertDialog(
-    modifier: Modifier = Modifier,
     onConfirmClick : () -> Unit,
     onDismissClick : () -> Unit
 ){

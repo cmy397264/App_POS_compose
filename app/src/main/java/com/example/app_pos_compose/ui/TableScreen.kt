@@ -19,18 +19,20 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.app_pos_compose.AppViewModelProvider
 import com.example.app_pos_compose.data.OrderSource
 import com.example.app_pos_compose.data.Table
+import com.example.app_pos_compose.ui.viewModel.TableViewModel
 
 enum class NavScreen{
     Main,
@@ -40,25 +42,24 @@ enum class NavScreen{
 
 @Composable
 fun TableUi(
-    tables : List<Table>,
-    viewModel: UiViewModel,
+    viewModel: TableViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavHostController = rememberNavController()
 ){
-    val uiState by viewModel.uiState.collectAsState()
+    val listUiState = viewModel.tableListUiState.collectAsState()
+
     NavHost(
         navController = navController,
         startDestination = NavScreen.Main.name,
     ){
         composable(NavScreen.Main.name){
             TableList(
-                tables = tables,
-                viewModel = viewModel,
-                uiState = uiState,
-                navController = navController)
+                tableList = listUiState.value.tableList,
+                navController = navController
+            )
         }
         composable(NavScreen.Order.name){
             MenuUi(
-                tableNum = uiState.currentSelectedTable,
+                tableNum = viewModel.uiState.selectedTableNum,
                 onCancelButtonClicked = {
                     navController.popBackStack(NavScreen.Main.name, inclusive = false) }
             )
@@ -71,36 +72,41 @@ fun TableUi(
 
 @Composable
 fun TableList(
-    tables: List<Table>,
-    viewModel: UiViewModel,
-    uiState: UiState,
+    viewModel: TableViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    tableList: List<Table>,
     navController: NavController
 ) {
-    Column{
+    Column {
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
             contentPadding = PaddingValues(10.dp)
         ) {
-            items(tables.size) { index ->
-                TableCard(table = tables[index], viewModel)
+            items(tableList.size) { index ->
+                TableCard(
+                    table = tableList[index],
+                    onClick = {
+                        viewModel.updateTableNum(index)
+                    }
+                )
             }
         }
-        TableInfoUi(uiState.currentSelectedTable, navController)
+        TableInfoUi(
+            tableNum = viewModel.uiState.selectedTableNum,
+            navController = navController
+        )
     }
 }
 
 @Composable
 fun TableCard(
     table: Table,
-    viewModel: UiViewModel
+    onClick: () -> Unit,
 ){
     Card(
         modifier = Modifier
             .padding(10.dp)
             .clickable(
-                onClick = {
-                    viewModel.updateTableNum(table.id)
-                }
+                onClick = onClick
             ),
     ) {
         Column(
@@ -109,7 +115,7 @@ fun TableCard(
                 .wrapContentHeight()
         ){
             Text(
-                text = "${table.id.toString()}번",
+                text = "${table.tableNum}번",
                 textAlign = TextAlign.Start,
                 modifier = Modifier.wrapContentWidth()
             )
@@ -124,15 +130,13 @@ fun TableCard(
 
 @Composable
 fun TableInfoUi(
-    currentSelectedTable: Int?,
+    tableNum: Int?,
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    when (currentSelectedTable) {
-        null -> Text(
-            text = "테이블이 선택되지 않았습니다.",
-            modifier.padding(10.dp)
-        )
+    when(tableNum){
+        null ->
+            Text(text = "테이블이 선택되지 않았습니다.",)
         else -> {
             Box(
                 modifier.fillMaxSize()
@@ -142,7 +146,7 @@ fun TableInfoUi(
                         .fillMaxWidth()
                         .padding(horizontal = 10.dp)
                 ) {
-                    Text(text = "테이블 ${currentSelectedTable}번")
+                    Text(text = "테이블 ${tableNum + 1}번")
                     LazyColumn(
                         modifier
                             .height(150.dp)

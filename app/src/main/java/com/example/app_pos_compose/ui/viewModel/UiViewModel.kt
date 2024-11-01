@@ -1,4 +1,4 @@
-package com.example.app_pos_compose.ui
+package com.example.app_pos_compose.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,16 +9,8 @@ class UiViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    fun updateTableNum(table : Int){
-        _uiState.value = _uiState.value.copy(
-            currentSelectedTable = table,
-            currentSelectedTab = _uiState.value.currentSelectedTab
-        )
-    }
-
     fun updateTab(tab : Int){
         _uiState.value = _uiState.value.copy(
-            currentSelectedTable = _uiState.value.currentSelectedTable,
             currentSelectedTab = tab
         )
     }
@@ -30,6 +22,5 @@ class UiViewModel : ViewModel() {
 
 data class UiState(
     var currentSelectedTab: Int = 0,
-    var currentSelectedTable : Int? = null,
     var isMain : Boolean = true
 )
