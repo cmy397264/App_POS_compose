@@ -30,7 +30,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.app_pos_compose.AppViewModelProvider
-import com.example.app_pos_compose.data.OrderSource
 import com.example.app_pos_compose.data.Table
 import com.example.app_pos_compose.ui.viewModel.TableViewModel
 
@@ -58,8 +57,8 @@ fun TableUi(
             )
         }
         composable(NavScreen.Order.name){
-            MenuUi(
-                tableNum = viewModel.uiState.selectedTableNum,
+            OrderScreen(
+                tableNum = viewModel.getTableNum(),
                 onCancelButtonClicked = {
                     navController.popBackStack(NavScreen.Main.name, inclusive = false) }
             )
@@ -159,9 +158,8 @@ fun TableInfoUi(
                             ),
                         horizontalAlignment = Alignment.Start
                     ) {
-                        items(OrderSource.orders.size) { index ->
-                            Text(text = OrderSource.orders[index].menu)
-                        }
+//                        items() { index ->
+//                        }
                     }
                 }
 
@@ -193,16 +191,6 @@ fun TableInfoUi(
                         Text("결제하기")
                     }
                 }
-
-                Text(
-                    text = "총 ${OrderSource.orders.size} 원",
-                    modifier
-                        .align(Alignment.BottomStart)
-                        .padding(
-                            start = 30.dp,
-                            bottom = 30.dp
-                        ),
-                )
             }
         }
     }

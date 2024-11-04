@@ -184,14 +184,13 @@ fun TableSettingUi(
                 val isInsert = tableCount < newCount
                 tableViewModel.insertOrDeleteTable(isInsert, newCount)
             },
-            enabled = tableCount.toString() != tableViewModel.uiState.tableCount,
+            enabled = tableCount.toString() != tableViewModel.uiState.tableCount && tableViewModel.uiState.tableCount != "",
             modifier = modifier
         ) {
             Text("apply")
         }
     }
 }
-
 
 @Composable
 fun MenuSettingDialog(

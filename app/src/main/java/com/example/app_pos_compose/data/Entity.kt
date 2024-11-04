@@ -23,7 +23,9 @@ data class Table(
 data class Order (
     @PrimaryKey(autoGenerate = true)
     val id : Int,
-    //val tableId : Int,
+    val parentId : Int,
+    val orderTable : String,
     val menu : String,
     val price : String,
+    val quantity : String,
 )

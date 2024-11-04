@@ -23,3 +23,14 @@ class TableRepository(private val tableDao: TableDao) : TableRepo {
     override fun countItems(): Flow<Int> = tableDao.countTables()
     override fun deleteItemByTableNum(n : Int) = tableDao.deleteTableById(n)
 }
+
+class OrderRepository(private val orderDao: OrderDao) : OrderRepo {
+    override suspend fun insertItem(item: Order) = orderDao.insertOrder(item)
+
+    override suspend fun updateItem(item: Order) = orderDao.updateOrder(item)
+
+    override suspend fun deleteItem(item: Order) = orderDao.deleteOrder()
+
+    override fun getOrderByParentId(n: Int) : Flow<List<Order>> = orderDao.getOrderByOrderTableId(n)
+
+}

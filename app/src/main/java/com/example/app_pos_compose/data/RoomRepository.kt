@@ -17,3 +17,10 @@ interface TableRepo {
     fun countItems() : Flow<Int>
     fun deleteItemByTableNum(n: Int)
 }
+
+interface OrderRepo {
+    suspend fun insertItem(item : Order)
+    suspend fun updateItem(item : Order)
+    suspend fun deleteItem(item : Order)
+    fun getOrderByParentId(n : Int) : Flow<List<Order>>
+}

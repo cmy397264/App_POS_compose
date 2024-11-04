@@ -21,15 +21,14 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = TableListUiState()
-            )
-
+                initialValue = TableListUiState())
     var uiState by mutableStateOf(TableUiState())
-
 
     fun updateTableNum(tableNum : Int){
         uiState = TableUiState(selectedTableNum = tableNum)
     }
+
+    fun getTableNum() : String = uiState.selectedTableNum!!.toString()
 
     fun updateTableCount(tableCount : String){
         uiState = TableUiState(tableCount = tableCount)
@@ -45,13 +44,13 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
                 for(i in getTableCount().toInt()+1..tableNum){
                     roomRepository.insertItem(Table(0,i,"0"))
                 }
-                uiState = uiState.copy(tableCount = "$tableNum")
             }
-            //insert문과 달리 삭제를 여러번 진행하기 때문에 실행 시간이 insert보다 길다.
-            // UI 쓰레드에서 IO 쓰레드로 옮겨서 실행함.
             else withContext(Dispatchers.IO) {
+                // insert문과 달리 삭제를 여러번 진행하기 때문에 실행 시간이 insert보다 길다.
+                // UI 쓰레드에서 IO 쓰레드로 옮겨서 실행함.
                 roomRepository.deleteItemByTableNum(tableNum)
             }
+            uiState = uiState.copy(tableCount = "")
         }
     }
 

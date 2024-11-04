@@ -45,3 +45,18 @@ interface TableDao {
     @Query("DELETE FROM `table` WHERE tableNum > :tableNum")
     fun deleteTableById(tableNum : Int)
 }
+
+@Dao
+interface OrderDao {
+    @Insert
+    suspend fun insertOrder(order: Order)
+
+    @Update
+    suspend fun updateOrder(order: Order)
+
+    @Delete
+    suspend fun deleteOrder()
+
+    @Query("SELECT * FROM `order` WHERE parentId =:id")
+    fun getOrderByOrderTableId(id : Int) : Flow<List<Order>>
+}
