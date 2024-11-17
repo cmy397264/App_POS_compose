@@ -5,10 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Menu::class, Table::class], version = 3, exportSchema = false)
+@Database(entities = [Menu::class, Table::class, Order::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun menudao(): MenuDao
-    abstract fun tabledao(): TableDao
+    abstract fun menuDao(): MenuDao
+    abstract fun tableDao(): TableDao
+    abstract fun orderDao() : OrderDao
 
     companion object{
         private var AppDB : AppDatabase? = null

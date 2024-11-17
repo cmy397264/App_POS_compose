@@ -15,6 +15,7 @@ data class Menu(
 data class Table(
     @PrimaryKey(autoGenerate = true)
     val id: Int,
+    var firstOrder : Int? = null,
     var tableNum : Int,
     var price : String
 )
@@ -23,7 +24,7 @@ data class Table(
 data class Order (
     @PrimaryKey(autoGenerate = true)
     val id : Int,
-    val parentId : Int,
+    val parentId : Int? = id,
     val orderTable : String,
     val menu : String,
     val price : String,

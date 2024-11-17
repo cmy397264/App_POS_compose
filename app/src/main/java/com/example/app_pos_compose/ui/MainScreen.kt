@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.app_pos_compose.AppViewModelProvider
+import com.example.app_pos_compose.data.AppViewModelProvider
 import com.example.app_pos_compose.ui.viewModel.TableViewModel
 import com.example.app_pos_compose.ui.viewModel.UiViewModel
 
@@ -62,7 +62,7 @@ fun MainScreen(
             }
             when (uiState.value.currentSelectedTab) {
                 TabNum.Table.ordinal -> {
-                    TableUi()
+                    MainNavigator()
                 }
 
                 TabNum.Receipt.ordinal -> {

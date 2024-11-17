@@ -39,11 +39,21 @@ interface TableDao {
     @Query("SELECT * FROM `table`")
     fun getAllTables() : Flow<List<Table>>
 
+    @Query("SELECT firstOrder FROM `table` WHERE tableNum = :tableNum")
+    fun getFirstOrder(tableNum : Int) : Flow<Int>
+
     @Query("SELECT COUNT(id) FROM `table`")
     fun countTables() : Flow<Int>
 
     @Query("DELETE FROM `table` WHERE tableNum > :tableNum")
     fun deleteTableById(tableNum : Int)
+
+    @Query("UPDATE `table` SET firstOrder = :firstOrder WHERE tableNum = :tableNum")
+    fun updateFirstOrderById(tableNum: Int, firstOrder : Int)
+
+    @Query("UPDATE 'table' SET price = price + :price WHERE tableNum = :tableNum")
+    fun updatePriceById(tableNum: Int, price : Int)
+
 }
 
 @Dao
@@ -55,8 +65,21 @@ interface OrderDao {
     suspend fun updateOrder(order: Order)
 
     @Delete
-    suspend fun deleteOrder()
+    suspend fun deleteOrder(order: Order)
 
     @Query("SELECT * FROM `order` WHERE parentId =:id")
     fun getOrderByOrderTableId(id : Int) : Flow<List<Order>>
+
+    @Query("SELECT COUNT(*) FROM 'order' WHERE parentId = :id")
+    fun getCountByTableId(id : Int) : Flow<Int>
+
+    @Query("SELECT menu FROM 'order' WHERE parentId = :id")
+    fun getOrderByMenu(id : Int) : Flow<List<String>>
+
+    @Query("SELECT id FROM 'order' ORDER BY id DESC LIMIT 1")
+    fun getLastInsertOrder() : Flow<Int>
+
+    @Query("update `order` set parentId = :first where id >= :first and id <= :last")
+    fun updateFirstOrder( first: Int, last: Int)
 }
+

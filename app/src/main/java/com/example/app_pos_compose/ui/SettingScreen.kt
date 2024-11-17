@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.app_pos_compose.AppViewModelProvider
+import com.example.app_pos_compose.data.AppViewModelProvider
 import com.example.app_pos_compose.data.Menu
 import com.example.app_pos_compose.ui.viewModel.MenuDetails
 import com.example.app_pos_compose.ui.viewModel.MenuViewModel
@@ -66,13 +66,16 @@ fun SettingUi(
     var selectedMenu by remember { mutableIntStateOf(0) }
 
     Box(
-        modifier.fillMaxSize()
+        modifier
+            .fillMaxSize()
             .padding(horizontal = 10.dp)
     ) {
         Column {
             TableSettingUi(tableViewModel = tableViewModel)
-            MenuSettingUi(
+            Text(text = "메뉴 추가 및 삭제")
+            MenuListUi(
                 menuList = menuListUiState,
+                isEditable = true,
                 onEditClick = { index : Int ->
                     coroutineScope.launch {
                         menuViewModel.updateUiState(menuListUiState[index].toMenuDetails())
@@ -91,7 +94,8 @@ fun SettingUi(
                 menuViewModel.updateUiState()
                 isEdit = false
                 openMenuSettingDialog = true },
-            modifier.align(Alignment.BottomEnd)
+            modifier
+                .align(Alignment.BottomEnd)
                 .padding(10.dp))
         { Text("메뉴추가") }
     }
@@ -131,12 +135,12 @@ fun SettingUi(
 }
 
 @Composable
-fun MenuSettingUi(
+fun MenuListUi(
     menuList: List<Menu>,
-    onEditClick: (Int) -> Unit,
-    onDeleteClick: (Int) -> Unit,
+    isEditable : Boolean = false,
+    onEditClick: (Int) -> Unit = {},
+    onDeleteClick: (Int) -> Unit = {},
 ){
-    Text(text = "메뉴 추가 및 삭제")
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         contentPadding = PaddingValues(10.dp),
@@ -145,8 +149,9 @@ fun MenuSettingUi(
             .height(500.dp)
     ) {
         items(menuList.size) { index ->
-            MenuCard(
+            MenuSettingCard(
                 menu = menuList[index],
+                isEditable = isEditable,
                 onEditClick = {onEditClick(index)},
                 onDeleteClick = {onDeleteClick(index)}
             )
@@ -163,7 +168,8 @@ fun TableSettingUi(
 
     Text(text = "테이블 추가 및 삭제")
     Row(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .height(70.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -250,9 +256,10 @@ fun MenuSettingDialog(
 }
 
 @Composable
-fun MenuCard(
-    menu: Menu,
+fun MenuSettingCard(
     modifier: Modifier = Modifier,
+    menu: Menu,
+    isEditable: Boolean,
     onEditClick : () -> Unit = {},
     onDeleteClick : () -> Unit = {}
 ) {
@@ -260,30 +267,34 @@ fun MenuCard(
         Column{
             Text(
                 text = menu.name,
-                modifier = modifier.fillMaxWidth()
+                modifier = modifier
+                    .fillMaxWidth()
                     .padding(start = 10.dp)
             )
             Text(
                 text = menu.price,
                 textAlign = TextAlign.End,
-                modifier = modifier.fillMaxWidth()
+                modifier = modifier
+                    .fillMaxWidth()
                     .padding(end = 10.dp)
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = onEditClick) {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = null
-                    )
-                }
-                IconButton(onClick = onDeleteClick) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = null
-                    )
+            if(isEditable) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = onEditClick) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = null
+                        )
+                    }
+                    IconButton(onClick = onDeleteClick) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = null
+                        )
+                    }
                 }
             }
         }

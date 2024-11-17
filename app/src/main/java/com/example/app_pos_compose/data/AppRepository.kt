@@ -22,6 +22,9 @@ class TableRepository(private val tableDao: TableDao) : TableRepo {
     override fun getAllItems(): Flow<List<Table>> = tableDao.getAllTables()
     override fun countItems(): Flow<Int> = tableDao.countTables()
     override fun deleteItemByTableNum(n : Int) = tableDao.deleteTableById(n)
+    override fun getFirstOrder(tableNum : Int) : Flow<Int> = tableDao.getFirstOrder(tableNum)
+    override fun updateFirstOrderById(tableNum: Int, firstOrder: Int) = tableDao.updateFirstOrderById(tableNum, firstOrder)
+    override fun updatePriceById(tableNum: Int, price : Int) = tableDao.updatePriceById(tableNum, price)
 }
 
 class OrderRepository(private val orderDao: OrderDao) : OrderRepo {
@@ -29,8 +32,14 @@ class OrderRepository(private val orderDao: OrderDao) : OrderRepo {
 
     override suspend fun updateItem(item: Order) = orderDao.updateOrder(item)
 
-    override suspend fun deleteItem(item: Order) = orderDao.deleteOrder()
+    override suspend fun deleteItem(item: Order) = orderDao.deleteOrder(item)
 
-    override fun getOrderByParentId(n: Int) : Flow<List<Order>> = orderDao.getOrderByOrderTableId(n)
+    override fun getOrderByParentTableId(n: Int) : Flow<List<Order>> = orderDao.getOrderByOrderTableId(n)
 
+    override fun getOrderByMenu(n: Int): Flow<List<String>> = orderDao.getOrderByMenu(n)
+
+    override fun getCountByTableId(n : Int) : Flow<Int> = orderDao.getCountByTableId(n)
+
+    override fun getLastInsertOrder() : Flow<Int> = orderDao.getLastInsertOrder()
+    override fun updateFirstOrder(first : Int, last: Int) = orderDao.updateFirstOrder(first, last)
 }

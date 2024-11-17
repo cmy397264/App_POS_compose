@@ -16,11 +16,18 @@ interface TableRepo {
     fun getAllItems(): Flow<List<Table>>
     fun countItems() : Flow<Int>
     fun deleteItemByTableNum(n: Int)
+    fun updateFirstOrderById(tableNum: Int, firstOrder: Int)
+    fun getFirstOrder(tableNum : Int) : Flow<Int>
+    fun updatePriceById(tableNum: Int, price : Int)
 }
 
 interface OrderRepo {
     suspend fun insertItem(item : Order)
     suspend fun updateItem(item : Order)
     suspend fun deleteItem(item : Order)
-    fun getOrderByParentId(n : Int) : Flow<List<Order>>
+    fun getOrderByParentTableId(n : Int) : Flow<List<Order>>
+    fun getOrderByMenu(n : Int) : Flow<List<String>>
+    fun getCountByTableId(n : Int) : Flow<Int>
+    fun getLastInsertOrder() : Flow<Int>
+    fun updateFirstOrder(first : Int, last : Int)
 }

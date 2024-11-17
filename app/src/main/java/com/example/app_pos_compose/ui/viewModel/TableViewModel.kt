@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.app_pos_compose.data.Table
 import com.example.app_pos_compose.data.TableRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -16,52 +17,70 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class TableViewModel(private val roomRepository: TableRepository) : ViewModel() {
-    val tableListUiState : StateFlow<TableListUiState> =
+    val tableListUiState: StateFlow<TableListUiState> =
         roomRepository.getAllItems().map { TableListUiState(it) }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = TableListUiState())
+                initialValue = TableListUiState()
+            )
     var uiState by mutableStateOf(TableUiState())
 
-    fun updateTableNum(tableNum : Int){
-        uiState = TableUiState(selectedTableNum = tableNum)
+    fun getFirstOrder(): Flow<Int> {
+        return roomRepository.getFirstOrder(uiState.selectedTableNum!!.toInt())
     }
 
-    fun getTableNum() : String = uiState.selectedTableNum!!.toString()
-
-    fun updateTableCount(tableCount : String){
-        uiState = TableUiState(tableCount = tableCount)
+    fun updateFirstOrder(tableNum: Int, firstOrder: Int) {
+        roomRepository.updateFirstOrderById(tableNum, firstOrder)
     }
 
-    private fun getTableCount() : String {
-        return tableListUiState.value.tableList.size.toString()
+    fun updatePrice(tableNum: Int, price: Int) {
+        roomRepository.updatePriceById(tableNum, price)
     }
 
-    fun insertOrDeleteTable(isInsert : Boolean, tableNum : Int){
-        viewModelScope.launch {
-            if (isInsert) {
-                for(i in getTableCount().toInt()+1..tableNum){
-                    roomRepository.insertItem(Table(0,i,"0"))
-                }
-            }
-            else withContext(Dispatchers.IO) {
-                // insert문과 달리 삭제를 여러번 진행하기 때문에 실행 시간이 insert보다 길다.
-                // UI 쓰레드에서 IO 쓰레드로 옮겨서 실행함.
-                roomRepository.deleteItemByTableNum(tableNum)
-            }
-            uiState = uiState.copy(tableCount = "")
+        fun updateTableNum(tableNum: Int) {
+            uiState = TableUiState(selectedTableNum = (tableNum + 1).toString())
         }
-    }
 
-    fun isNullOrIntTableCount() : Int {
-        if(uiState.tableCount.isEmpty()) return tableListUiState.value.tableList.size
-        return uiState.tableCount.toInt()
-    }
+        fun getTableNum(): String = uiState.selectedTableNum!!
+
+        fun updateTableCount(tableCount: String) {
+            uiState = TableUiState(tableCount = tableCount)
+        }
+
+        fun getTableCount(): String {
+            return tableListUiState.value.tableList.size.toString()
+        }
+
+        fun insertOrDeleteTable(isInsert: Boolean, tableNum: Int) {
+            viewModelScope.launch {
+                if (isInsert) {
+                    for (i in getTableCount().toInt() + 1..tableNum) {
+                        roomRepository.insertItem(
+                            Table(
+                                id = 0,
+                                firstOrder = null,
+                                tableNum = i,
+                                price = "0"
+                            )
+                        )
+                    }
+                } else withContext(Dispatchers.IO) {
+                    roomRepository.deleteItemByTableNum(tableNum)
+                }
+                uiState = uiState.copy(tableCount = "")
+            }
+        }
+
+        fun isNullOrIntTableCount(): Int {
+            if (uiState.tableCount.isEmpty()) return tableListUiState.value.tableList.size
+            return uiState.tableCount.toInt()
+        }
 }
 
 data class TableUiState(
-    val selectedTableNum : Int? = null,
+    val selectedTableNum : String? = null,
+//    val selectedTableFirstOrder : Int? = null,
     var tableCount : String = ""
 )
 
