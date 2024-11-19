@@ -32,7 +32,6 @@ enum class TabNum {
 fun MainScreen(
     modifier: Modifier = Modifier,
     uiViewModel: UiViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    tableViewModel: TableViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ){
     val uiState = uiViewModel.uiState.collectAsState()
 
@@ -70,9 +69,7 @@ fun MainScreen(
                 }
 
                 TabNum.Setting.ordinal -> {
-                    SettingUi(
-                        tableViewModel = tableViewModel
-                    )
+                    SettingUi()
                 }
             }
         }

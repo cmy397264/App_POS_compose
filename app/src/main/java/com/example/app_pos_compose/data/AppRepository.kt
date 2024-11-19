@@ -34,7 +34,7 @@ class OrderRepository(private val orderDao: OrderDao) : OrderRepo {
 
     override suspend fun deleteItem(item: Order) = orderDao.deleteOrder(item)
 
-    override fun getOrderByParentTableId(n: Int) : Flow<List<Order>> = orderDao.getOrderByOrderTableId(n)
+    override fun getOrderByParentId(n: Int) : Flow<List<Order>> = orderDao.getOrderByParentId(n)
 
     override fun getOrderByMenu(n: Int): Flow<List<String>> = orderDao.getOrderByMenu(n)
 

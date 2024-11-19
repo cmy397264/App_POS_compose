@@ -19,6 +19,8 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -31,7 +33,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.app_pos_compose.data.AppViewModelProvider
 import com.example.app_pos_compose.data.Table
+import com.example.app_pos_compose.ui.viewModel.OrderViewModel
 import com.example.app_pos_compose.ui.viewModel.TableViewModel
+import kotlinx.coroutines.launch
 
 enum class NavScreen{
     Main,
@@ -55,13 +59,14 @@ fun MainNavigator(
             )
         }
         composable(NavScreen.Order.name){
+            val tableNum = viewModel.getTableNum()
             OrderScreen(
-                tableNum = viewModel.getTableNum(),
-                firstOrder = viewModel.getFirstOrder(),
+                tableNum = tableNum,
+                firstOrder = viewModel.getFirstOrder(tableNum.toInt()),
                 onFirstOrderChange = {
-                    tableNum: Int, firstOrder : Int -> viewModel.updateFirstOrder(tableNum, firstOrder) },
+                    t: Int, firstOrder : Int -> viewModel.updateFirstOrder(t, firstOrder) },
                 onClickSubmitButton = {
-                    tableNum: Int, price : Int -> viewModel.updatePrice(tableNum, price) },
+                    t: Int, price : Int -> viewModel.updatePrice(t, price) },
                 onClickCancelButton = {
                     navController.popBackStack(NavScreen.Main.name, inclusive = false) }
             )
@@ -77,15 +82,25 @@ fun TableScreen(
     tableViewModel: TableViewModel,
     navController: NavController
 ) {
+    val coroutinScope = rememberCoroutineScope()
     val listUiState = tableViewModel.tableListUiState.collectAsState().value.tableList
+
     Column {
         TableListUi(
             tableList = listUiState,
-            onClick = {index -> tableViewModel.updateTableNum(index)}
+            onClick = {
+                index ->
+                tableViewModel.updateTableNum(index)
+                coroutinScope.launch {
+                    tableViewModel.setFirstOrder(index+1)
+                }
+            }
         )
         TableInfoUi(
-            tableNum = tableViewModel.uiState.selectedTableNum,
-            navController = navController
+            tableNum = tableViewModel.uiState.tableNum,
+            firstOrder = tableViewModel.uiState.firstOrder,
+            onClickOrder = {navController.navigate(NavScreen.Order.name)},
+            onClickPay = {navController.navigate(NavScreen.Pay.name)}
         )
     }
 }
@@ -93,17 +108,21 @@ fun TableScreen(
 @Composable
 fun TableListUi(
     tableList : List<Table>,
-    onClick: (Int) -> Unit
+    onClick: (Int) -> Unit,
+    orderViewModel: OrderViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ){
     LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
+        columns = GridCells.Fixed(3),
         contentPadding = PaddingValues(10.dp)
     ) {
         items(tableList.size) { index ->
             TableCard(
                 title = tableList[index].tableNum.toString() + "번",
                 context = tableList[index].price + "원",
-                onClick = {onClick(index)}
+                onClick = {
+                    onClick(index)
+                    orderViewModel.getOrderList(tableList[index].firstOrder)
+                }
             )
         }
     }
@@ -141,9 +160,11 @@ fun TableCard(
 
 @Composable
 fun TableInfoUi(
+    modifier: Modifier = Modifier,
     tableNum: String?,
-    navController: NavController,
-    modifier: Modifier = Modifier
+    firstOrder: Int,
+    onClickOrder: () -> Unit,
+    onClickPay: () -> Unit,
 ) {
     when(tableNum){
         null ->
@@ -158,21 +179,10 @@ fun TableInfoUi(
                         .padding(horizontal = 10.dp)
                 ) {
                     Text(text = "테이블 ${tableNum}번")
-                    LazyColumn(
-                        modifier
-                            .height(150.dp)
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                            .border(
-                                1.dp,
-                                color = androidx.compose.ui.graphics.Color.Gray,
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
-                            ),
-                        horizontalAlignment = Alignment.Start
-                    ) {
-//                        items() { index ->
-//                        }
-                    }
+                    OrderCellTemplate()
+                    TableOrderListUi(
+                        firstOrder = firstOrder
+                    )
                 }
 
                 Column(
@@ -184,21 +194,15 @@ fun TableInfoUi(
                         )
                 ) {
                     FloatingActionButton(
-                        onClick = {
-                            navController.navigate(NavScreen.Order.name)
-                        },
-                        modifier
-                            .padding(10.dp)
+                        onClick = onClickOrder,
+                        modifier.padding(10.dp)
                     ) {
                         Text("주문하기")
                     }
 
                     FloatingActionButton(
-                        onClick = {
-                            navController.navigate(NavScreen.Pay.name)
-                        },
-                        modifier
-                            .padding(10.dp)
+                        onClick = onClickPay,
+                        modifier.padding(10.dp)
                     ) {
                         Text("결제하기")
                     }
@@ -207,3 +211,33 @@ fun TableInfoUi(
         }
     }
 }
+
+@Composable
+fun TableOrderListUi(
+    modifier: Modifier = Modifier,
+    orderViewModel: OrderViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    firstOrder : Int
+) {
+    val orderList by orderViewModel.orderList.collectAsState()
+
+    LazyColumn(
+        modifier
+            .height(150.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .border(
+                1.dp,
+                color = androidx.compose.ui.graphics.Color.Gray,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
+            ),
+        horizontalAlignment = Alignment.Start
+    ) {
+        items(orderList.size) { index ->
+            OrderCell(
+                orderInfo = orderList[index],
+                onDelete = {}
+            )
+        }
+    }
+}
+

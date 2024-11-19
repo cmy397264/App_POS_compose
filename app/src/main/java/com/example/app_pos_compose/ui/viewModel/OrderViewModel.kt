@@ -2,13 +2,36 @@ package com.example.app_pos_compose.ui.viewModel
 
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.app_pos_compose.data.Order
 import com.example.app_pos_compose.data.OrderRepository
 import com.example.app_pos_compose.ui.MenuInfo
 import com.example.app_pos_compose.ui.OrderInfo
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel() {
+
+    private val _orderList = MutableStateFlow<List<OrderInfo>>(listOf())
+    val orderList : StateFlow<List<OrderInfo>> = _orderList.asStateFlow()
+
+    fun getOrderList(firstOrder : Int) {
+        viewModelScope.launch {
+            orderRepository.getOrderByParentId(firstOrder).collect { orders ->
+                _orderList.value = orders.groupBy {
+                    it.menu
+                }.map{ (menu, order) ->
+                    OrderInfo(
+                        menuInfo = MenuInfo(menu, order[0].price.toInt()),
+                        quantity = mutableIntStateOf(order.sumOf { it.quantity.toInt() })
+                    )
+                }
+            }
+        }
+    }
 
     suspend fun insertOrderFromOrderList(
         orderList: MutableList<OrderInfo>,
@@ -28,18 +51,8 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
         return first
     }
 
-    suspend fun getLastInsertOrder(): Int {
+    private suspend fun getLastInsertOrder(): Int {
         return orderRepository.getLastInsertOrder().first()
-    }
-
-    suspend fun getOrderByParentTableId(n: Int): List<OrderInfo> {
-        val orderList = mutableListOf<OrderInfo>()
-        orderRepository.getOrderByParentTableId(n).collect {
-            for (i in it.indices) {
-                orderList.add(orderToOrderInfo(it[i]))
-            }
-        }
-        return orderList
     }
 }
 

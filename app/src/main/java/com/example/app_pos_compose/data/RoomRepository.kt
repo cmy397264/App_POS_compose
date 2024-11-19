@@ -25,7 +25,7 @@ interface OrderRepo {
     suspend fun insertItem(item : Order)
     suspend fun updateItem(item : Order)
     suspend fun deleteItem(item : Order)
-    fun getOrderByParentTableId(n : Int) : Flow<List<Order>>
+    fun getOrderByParentId(n : Int) : Flow<List<Order>>
     fun getOrderByMenu(n : Int) : Flow<List<String>>
     fun getCountByTableId(n : Int) : Flow<Int>
     fun getLastInsertOrder() : Flow<Int>

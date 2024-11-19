@@ -55,7 +55,6 @@ import kotlinx.coroutines.launch
 fun SettingUi(
     modifier: Modifier = Modifier,
     menuViewModel: MenuViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    tableViewModel: TableViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
     val menuListUiState = menuViewModel.menuListUiState.collectAsState().value.menuList
@@ -71,7 +70,7 @@ fun SettingUi(
             .padding(horizontal = 10.dp)
     ) {
         Column {
-            TableSettingUi(tableViewModel = tableViewModel)
+            TableSettingUi()
             Text(text = "메뉴 추가 및 삭제")
             MenuListUi(
                 menuList = menuListUiState,
@@ -162,7 +161,7 @@ fun MenuListUi(
 @Composable
 fun TableSettingUi(
     modifier: Modifier = Modifier,
-    tableViewModel: TableViewModel,
+    tableViewModel: TableViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ){
     val tableCount = tableViewModel.tableListUiState.collectAsState().value.tableList.size
 

@@ -35,8 +35,6 @@ import com.example.app_pos_compose.data.AppViewModelProvider
 import com.example.app_pos_compose.ui.viewModel.MenuViewModel
 import com.example.app_pos_compose.ui.viewModel.OrderViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -45,7 +43,7 @@ fun OrderScreen(
     modifier: Modifier = Modifier,
     orderViewModel: OrderViewModel = viewModel(factory = AppViewModelProvider.Factory),
     tableNum: String,
-    firstOrder: Flow<Int>,
+    firstOrder: Int?,
     onFirstOrderChange: (Int, Int) -> Unit = { _, _ ->},
     onClickSubmitButton: (Int, Int) -> Unit = { _, _ ->},
     onClickCancelButton: () -> Unit = {},
@@ -63,24 +61,7 @@ fun OrderScreen(
             MenuUi(onClick = { menuInfo: MenuInfo -> addOrder(orderList, menuInfo) })
             Text(text = tableNum + "번")
             Text(text = "주문 목록")
-            Row {
-                Text(
-                    text = "메뉴",
-                    modifier = modifier.weight(2f)
-                )
-                Text(
-                    text = "수량",
-                    modifier = modifier.weight(1f)
-                )
-                Text(
-                    text = "가격",
-                    modifier = modifier.weight(1f)
-                )
-                Text(
-                    text = "금액",
-                    modifier = modifier.weight(1f)
-                )
-            }
+            OrderCellTemplate()
             LazyColumn(
                 modifier = modifier.height(200.dp)
                     .border(1.dp, color = Color.Black, shape = RoundedCornerShape(10.dp))
@@ -110,15 +91,13 @@ fun OrderScreen(
             FloatingActionButton(
                 onClick = {
                     coroutineScope.launch {
-
-
                         withContext(Dispatchers.IO) {
                             if (orderList.isNotEmpty()) {
                                 orderViewModel.insertOrderFromOrderList(
-                                    orderList, tableNum, firstOrder.first())
+                                    orderList, tableNum, firstOrder)
                             }
 
-                            if(firstOrder.first() == 0) {
+                            if(firstOrder == 0 || firstOrder == null) {
                                 val fo = orderViewModel.setLastInsertOrder(orderList.size)
                                 onFirstOrderChange(fo, tableNum.toInt())
                             }
@@ -198,6 +177,30 @@ fun MenuCard(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+@Composable
+fun OrderCellTemplate(
+    modifier: Modifier = Modifier
+){
+    Row {
+        Text(
+            text = "메뉴",
+            modifier = modifier.weight(2f)
+        )
+        Text(
+            text = "수량",
+            modifier = modifier.weight(1f)
+        )
+        Text(
+            text = "가격",
+            modifier = modifier.weight(1f)
+        )
+        Text(
+            text = "금액",
+            modifier = modifier.weight(1f)
+        )
     }
 }
 

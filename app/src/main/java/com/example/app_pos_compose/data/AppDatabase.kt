@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Menu::class, Table::class, Order::class], version = 5, exportSchema = false)
+@Database(entities = [Menu::class, Table::class, Order::class], version = 6, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun menuDao(): MenuDao
     abstract fun tableDao(): TableDao
@@ -20,8 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "Test_Database"
-                )
-                    .fallbackToDestructiveMigration()
+                ).fallbackToDestructiveMigration()
                     .build()
                     .also {
                        AppDB = it

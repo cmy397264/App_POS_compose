@@ -68,7 +68,7 @@ interface OrderDao {
     suspend fun deleteOrder(order: Order)
 
     @Query("SELECT * FROM `order` WHERE parentId =:id")
-    fun getOrderByOrderTableId(id : Int) : Flow<List<Order>>
+    fun getOrderByParentId(id : Int) : Flow<List<Order>>
 
     @Query("SELECT COUNT(*) FROM 'order' WHERE parentId = :id")
     fun getCountByTableId(id : Int) : Flow<Int>
