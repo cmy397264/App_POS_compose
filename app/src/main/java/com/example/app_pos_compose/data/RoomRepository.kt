@@ -30,4 +30,7 @@ interface OrderRepo {
     fun getCountByTableId(n : Int) : Flow<Int>
     fun getLastInsertOrder() : Flow<Int>
     fun updateFirstOrder(first : Int, last : Int)
+    fun deleteLastOrder(menu : String, parentId : Int)
+    fun updateLastOrder(menu : String, parentId : Int)
+    fun getQuantityFromLastOrder(menu : String, parentId : Int) : Flow<Int>
 }

@@ -1,5 +1,7 @@
 package com.example.app_pos_compose.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +21,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.app_pos_compose.data.AppViewModelProvider
-import com.example.app_pos_compose.ui.viewModel.TableViewModel
 import com.example.app_pos_compose.ui.viewModel.UiViewModel
 
 enum class TabNum {
@@ -28,6 +29,7 @@ enum class TabNum {
     Setting
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,

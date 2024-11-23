@@ -1,13 +1,18 @@
 package com.example.app_pos_compose.ui
 
-import androidx.compose.foundation.border
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -25,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -43,6 +49,7 @@ enum class NavScreen{
     Pay,
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainNavigator(
     viewModel: TableViewModel = viewModel(factory = AppViewModelProvider.Factory),
@@ -59,14 +66,14 @@ fun MainNavigator(
             )
         }
         composable(NavScreen.Order.name){
-            val tableNum = viewModel.getTableNum()
             OrderScreen(
-                tableNum = tableNum,
-                firstOrder = viewModel.getFirstOrder(tableNum.toInt()),
-                onFirstOrderChange = {
-                    t: Int, firstOrder : Int -> viewModel.updateFirstOrder(t, firstOrder) },
-                onClickSubmitButton = {
-                    t: Int, price : Int -> viewModel.updatePrice(t, price) },
+                tableNum = viewModel.uiState.tableNum!!,
+                firstOrder = viewModel.uiState.firstOrder,
+                onFirstOrderChange = { tableNum: Int, firstOrder : Int ->
+                    viewModel.updateFirstOrder(tableNum, firstOrder)
+                    viewModel.setFirstOrder(tableNum) },
+                onClickSubmitButton = { tableNum: Int, price : Int ->
+                    viewModel.updatePrice(tableNum, price) },
                 onClickCancelButton = {
                     navController.popBackStack(NavScreen.Main.name, inclusive = false) }
             )
@@ -77,28 +84,38 @@ fun MainNavigator(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TableScreen(
     tableViewModel: TableViewModel,
+    orderViewModel: OrderViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController
 ) {
-    val coroutinScope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
     val listUiState = tableViewModel.tableListUiState.collectAsState().value.tableList
 
-    Column {
+    Column(
+        Modifier.scrollable(
+            state = ScrollState(0),
+            orientation = Orientation.Vertical,
+        )
+    ) {
         TableListUi(
+            orderViewModel = orderViewModel,
             tableList = listUiState,
             onClick = {
                 index ->
                 tableViewModel.updateTableNum(index)
-                coroutinScope.launch {
+                coroutineScope.launch {
                     tableViewModel.setFirstOrder(index+1)
                 }
             }
         )
         TableInfoUi(
-            tableNum = tableViewModel.uiState.tableNum,
+            modifier = Modifier.fillMaxWidth(),
+            orderViewModel = orderViewModel,
             firstOrder = tableViewModel.uiState.firstOrder,
+            tableNum = tableViewModel.uiState.tableNum,
             onClickOrder = {navController.navigate(NavScreen.Order.name)},
             onClickPay = {navController.navigate(NavScreen.Pay.name)}
         )
@@ -109,7 +126,7 @@ fun TableScreen(
 fun TableListUi(
     tableList : List<Table>,
     onClick: (Int) -> Unit,
-    orderViewModel: OrderViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    orderViewModel: OrderViewModel
 ){
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -121,7 +138,7 @@ fun TableListUi(
                 context = tableList[index].price + "원",
                 onClick = {
                     onClick(index)
-                    orderViewModel.getOrderList(tableList[index].firstOrder)
+                    orderViewModel.getOrderList(tableList[index].firstOrder!!)
                 }
             )
         }
@@ -158,35 +175,57 @@ fun TableCard(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TableInfoUi(
     modifier: Modifier = Modifier,
-    tableNum: String?,
+    orderViewModel: OrderViewModel,
     firstOrder: Int,
+    tableNum: String?,
     onClickOrder: () -> Unit,
     onClickPay: () -> Unit,
 ) {
+    val orderList by orderViewModel.orderList.collectAsState()
+
     when(tableNum){
         null ->
             Text(text = "테이블이 선택되지 않았습니다.")
         else -> {
             Box(
-                modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             ) {
-                Column(
-                    modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 10.dp)
-                ) {
-                    Text(text = "테이블 ${tableNum}번")
-                    OrderCellTemplate()
-                    TableOrderListUi(
-                        firstOrder = firstOrder
+                Column(modifier.padding(horizontal = 10.dp)) {
+                    Row{
+                        Text(
+                            text = "테이블 ${tableNum}번",
+                            fontSize = 24.sp
+                        )
+                        Column(modifier) {
+                            Text(
+                                text = "한번 터치 = 메뉴 추가",
+                                fontSize = 16.sp,
+                                modifier = Modifier.align(Alignment.End)
+                            )
+                            Text(
+                                text = "두번 터치 = 메뉴 삭제",
+                                fontSize = 16.sp,
+                                modifier = Modifier.align(Alignment.End)
+                            )
+                        }
+                    }
+                    OrderListUi(
+                        firstOrder = firstOrder,
+                        orderList = orderList,
+                        onTap = { index : Int ->
+                            orderViewModel.insertOrderFromOrderInfo(orderList[index], tableNum, firstOrder)
+                        },
+                        onDoubleTap = { menu : String, parentId : Int ->
+                            orderViewModel.deleteOrUpdateOrder(menu, parentId)
+                        }
                     )
                 }
-
                 Column(
-                    modifier
+                    modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(
                             bottom = 10.dp,
@@ -195,14 +234,14 @@ fun TableInfoUi(
                 ) {
                     FloatingActionButton(
                         onClick = onClickOrder,
-                        modifier.padding(10.dp)
+                        modifier = Modifier.padding(10.dp)
                     ) {
                         Text("주문하기")
                     }
 
                     FloatingActionButton(
                         onClick = onClickPay,
-                        modifier.padding(10.dp)
+                        modifier = Modifier.padding(10.dp)
                     ) {
                         Text("결제하기")
                     }
@@ -213,31 +252,32 @@ fun TableInfoUi(
 }
 
 @Composable
-fun TableOrderListUi(
+fun OrderListUi(
     modifier: Modifier = Modifier,
-    orderViewModel: OrderViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    firstOrder : Int
+    firstOrder : Int,
+    orderList: List<OrderInfo>,
+    onTap: (Int) -> Unit = {},
+    onDoubleTap: (String, Int) -> Unit = { _: String, _: Int -> }
 ) {
-    val orderList by orderViewModel.orderList.collectAsState()
+    OrderCellTemplate("메뉴", "수량", "가격", "금액")
 
     LazyColumn(
-        modifier
-            .height(150.dp)
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .border(
-                1.dp,
-                color = androidx.compose.ui.graphics.Color.Gray,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
-            ),
-        horizontalAlignment = Alignment.Start
+        modifier.defaultMinSize(minHeight = 200.dp)
     ) {
         items(orderList.size) { index ->
+            val onTapToUnit = {
+                onTap(index)
+            }
+            val onDoubleTapToUnit = {
+                if (firstOrder != 0) {
+                    onDoubleTap(orderList[index].menuInfo.name, firstOrder)
+                }
+            }
             OrderCell(
                 orderInfo = orderList[index],
-                onDelete = {}
+                onTap = onTapToUnit,
+                onDoubleTap = onDoubleTapToUnit
             )
         }
     }
 }
-

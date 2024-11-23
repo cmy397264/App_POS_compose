@@ -53,7 +53,6 @@ interface TableDao {
 
     @Query("UPDATE 'table' SET price = price + :price WHERE tableNum = :tableNum")
     fun updatePriceById(tableNum: Int, price : Int)
-
 }
 
 @Dao
@@ -81,5 +80,14 @@ interface OrderDao {
 
     @Query("update `order` set parentId = :first where id >= :first and id <= :last")
     fun updateFirstOrder( first: Int, last: Int)
+
+    @Query("DELETE FROM `order` WHERE id = (SELECT id FROM `order` WHERE menu = :menu and parentId = :parentId order by id desc limit 1)")
+    fun deleteLastOrder(menu : String, parentId : Int)
+
+    @Query("UPDATE `order` SET quantity = quantity - 1 WHERE id = (SELECT id FROM `order` WHERE menu = :menu and parentId = :parentId order by id desc limit 1)")
+    fun updateLastOrder(menu : String, parentId : Int)
+
+    @Query("SELECT quantity FROM `order` WHERE menu = :menu and parentId = :parentId ORDER BY id DESC LIMIT 1")
+    fun getQuantityFromLastOrder(menu : String, parentId : Int) : Flow<Int>
 }
 

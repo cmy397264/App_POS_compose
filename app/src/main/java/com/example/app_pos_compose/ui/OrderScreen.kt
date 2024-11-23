@@ -1,7 +1,13 @@
 package com.example.app_pos_compose.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,12 +44,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun OrderScreen(
     modifier: Modifier = Modifier,
     orderViewModel: OrderViewModel = viewModel(factory = AppViewModelProvider.Factory),
     tableNum: String,
-    firstOrder: Int?,
+    firstOrder: Int,
     onFirstOrderChange: (Int, Int) -> Unit = { _, _ ->},
     onClickSubmitButton: (Int, Int) -> Unit = { _, _ ->},
     onClickCancelButton: () -> Unit = {},
@@ -56,29 +63,24 @@ fun OrderScreen(
             .fillMaxSize()
             .padding(horizontal = 10.dp)
     ) {
-        Column {
+        Column(
+            modifier.scrollable(
+                state = ScrollState(0),
+                orientation = Orientation.Vertical)
+        ) {
             Text(text = "메뉴")
             MenuUi(onClick = { menuInfo: MenuInfo -> addOrder(orderList, menuInfo) })
+
             Text(text = tableNum + "번")
             Text(text = "주문 목록")
-            OrderCellTemplate()
-            LazyColumn(
-                modifier = modifier.height(200.dp)
-                    .border(1.dp, color = Color.Black, shape = RoundedCornerShape(10.dp))
-            ) {
-                items(orderList.size) { index ->
-                    OrderCell(
-                        orderInfo = orderList[index],
-                        onDelete = { minusOrRemoveOrder(orderList, orderList[index]) }
-                    )
-                }
-            }
-            if (orderList.isNotEmpty()) {
-                Text(
-                    text = "총 금액 : ${getAllPrice(orderList)} 원",
-                    modifier = modifier.padding(top = 20.dp, start = 20.dp)
-                )
-            }
+            OrderListUi(
+                modifier = modifier,
+                firstOrder = firstOrder,
+                orderList = orderList,
+                onTap = {minusOrRemoveOrder(orderList, orderList[it])},
+                onDoubleTap = {_, index:Int -> minusOrRemoveOrder(orderList, orderList[index])}
+            )
+            OrderCellTemplate("총 금액 : ${getAllPrice(orderList)} 원")
         }
         Column(
             modifier
@@ -93,15 +95,13 @@ fun OrderScreen(
                     coroutineScope.launch {
                         withContext(Dispatchers.IO) {
                             if (orderList.isNotEmpty()) {
-                                orderViewModel.insertOrderFromOrderList(
-                                    orderList, tableNum, firstOrder)
-                            }
+                                orderViewModel.insertOrderFromOrderList(orderList, tableNum, firstOrder)
 
-                            if(firstOrder == 0 || firstOrder == null) {
-                                val fo = orderViewModel.setLastInsertOrder(orderList.size)
-                                onFirstOrderChange(fo, tableNum.toInt())
+                                if(firstOrder == 0) {
+                                    val fo = orderViewModel.setLastInsertOrder(orderList.size) // 테이블의 첫 주문번호
+                                    onFirstOrderChange(tableNum.toInt(), fo)
+                                }
                             }
-
                             onClickSubmitButton(tableNum.toInt(), getAllPrice(orderList).toInt())
                         }
 
@@ -182,24 +182,32 @@ fun MenuCard(
 
 @Composable
 fun OrderCellTemplate(
-    modifier: Modifier = Modifier
+    firstColumn : String = "",
+    secondColumn : String = "",
+    thirdColumn : String = "",
+    fourthColumn : String = ""
 ){
-    Row {
+    Row(
+        modifier = Modifier.border(
+            width = 0.dp,
+            color = Color.Black,
+            shape = RoundedCornerShape(1.dp))
+    ) {
         Text(
-            text = "메뉴",
-            modifier = modifier.weight(2f)
+            text = firstColumn,
+            modifier = Modifier.weight(2f)
         )
         Text(
-            text = "수량",
-            modifier = modifier.weight(1f)
+            text = secondColumn,
+            modifier = Modifier.weight(1f)
         )
         Text(
-            text = "가격",
-            modifier = modifier.weight(1f)
+            text = thirdColumn,
+            modifier = Modifier.weight(1f)
         )
         Text(
-            text = "금액",
-            modifier = modifier.weight(1f)
+            text = fourthColumn,
+            modifier = Modifier.weight(1f)
         )
     }
 }
@@ -208,11 +216,18 @@ fun OrderCellTemplate(
 fun OrderCell(
     modifier: Modifier = Modifier,
     orderInfo: OrderInfo,
-    onDelete: () -> Unit
+    onTap: () -> Unit = {},
+    onDoubleTap: () -> Unit = {},
 ) {
     Row(
         modifier = modifier.padding(horizontal = 10.dp)
-            .clickable(onClick = onDelete)
+            .pointerInput(Unit){
+                detectTapGestures(
+                    onTap = {_ -> onTap()},
+                    onDoubleTap = {_ -> onDoubleTap()}
+                )
+
+            }
     ) {
         Text(text = orderInfo.menuInfo.name,
             modifier = modifier.weight(2f))
