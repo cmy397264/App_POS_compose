@@ -27,7 +27,9 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
     var uiState by mutableStateOf(TableUiState())
 
     fun updateFirstOrder(tableNum: Int, firstOrder: Int) {
-        roomRepository.updateFirstOrderById(tableNum, firstOrder)
+        viewModelScope.launch {
+            roomRepository.updateFirstOrderById(tableNum, firstOrder)
+        }
     }
 
     fun setFirstOrder(tableNum: Int){
@@ -38,8 +40,17 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
         }
     }
 
+    fun resetTable(tableNum : Int){
+        updatePrice(tableNum, 0)
+        updateFirstOrder(tableNum, 0)
+    }
+
     fun updatePrice(tableNum: Int, price: Int) {
-        roomRepository.updatePriceById(tableNum, price)
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                roomRepository.updatePriceById(tableNum, price)
+            }
+        }
     }
 
     fun updateTableNum(tableNum: Int) {
@@ -50,7 +61,9 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
     
     //테이블 수를 조절할 경우 uiState를 초기화
     fun updateTableCount(tableCount: String) {
-        uiState = TableUiState(tableCount = tableCount)
+        viewModelScope.launch {
+            uiState = TableUiState(tableCount = tableCount)
+        }
     }
 
     private fun getTableCount(): String {

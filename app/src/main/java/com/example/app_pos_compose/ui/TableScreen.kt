@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,7 +54,7 @@ enum class NavScreen{
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainNavigator(
-    viewModel: TableViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    tableViewModel: TableViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavHostController = rememberNavController()
 ){
     NavHost(
@@ -61,24 +63,32 @@ fun MainNavigator(
     ){
         composable(NavScreen.Main.name){
             TableScreen(
-                tableViewModel = viewModel,
+                tableViewModel = tableViewModel,
                 navController = navController
             )
         }
         composable(NavScreen.Order.name){
             OrderScreen(
-                tableNum = viewModel.uiState.tableNum!!,
-                firstOrder = viewModel.uiState.firstOrder,
+                tableNum = tableViewModel.uiState.tableNum!!,
+                firstOrder = tableViewModel.uiState.firstOrder,
                 onFirstOrderChange = { tableNum: Int, firstOrder : Int ->
-                    viewModel.updateFirstOrder(tableNum, firstOrder)
-                    viewModel.setFirstOrder(tableNum) },
+                    tableViewModel.updateFirstOrder(tableNum, firstOrder)
+                    tableViewModel.setFirstOrder(tableNum) },
                 onClickSubmitButton = { tableNum: Int, price : Int ->
-                    viewModel.updatePrice(tableNum, price) },
+                    tableViewModel.updatePrice(tableNum, price) },
                 onClickCancelButton = {
                     navController.popBackStack(NavScreen.Main.name, inclusive = false) }
             )
         }
         composable(NavScreen.Pay.name){
+            PayScreen(
+                tableNum = tableViewModel.uiState.tableNum!!,
+                firstOrder = tableViewModel.uiState.firstOrder,
+                onClickSubmitButton = tableViewModel :: resetTable,
+                onClickCancelButton = {
+                    navController.popBackStack(NavScreen.Main.name, inclusive = false)
+                },
+            )
 
         }
     }
@@ -117,7 +127,11 @@ fun TableScreen(
             firstOrder = tableViewModel.uiState.firstOrder,
             tableNum = tableViewModel.uiState.tableNum,
             onClickOrder = {navController.navigate(NavScreen.Order.name)},
-            onClickPay = {navController.navigate(NavScreen.Pay.name)}
+            onClickPay = {navController.navigate(NavScreen.Pay.name)},
+            onPriceChange = {
+                tableNum : Int, price : Int ->
+                tableViewModel.updatePrice(tableNum, price) // 오류 발생
+            }
         )
     }
 }
@@ -184,6 +198,7 @@ fun TableInfoUi(
     tableNum: String?,
     onClickOrder: () -> Unit,
     onClickPay: () -> Unit,
+    onPriceChange: (Int, Int) -> Unit
 ) {
     val orderList by orderViewModel.orderList.collectAsState()
 
@@ -198,22 +213,22 @@ fun TableInfoUi(
                     Row{
                         Text(
                             text = "테이블 ${tableNum}번",
-                            fontSize = 24.sp
+                            fontSize = 28.sp
                         )
                         Column(modifier) {
                             Text(
                                 text = "한번 터치 = 메뉴 추가",
-                                fontSize = 16.sp,
+                                fontSize = 14.sp,
                                 modifier = Modifier.align(Alignment.End)
                             )
                             Text(
                                 text = "두번 터치 = 메뉴 삭제",
-                                fontSize = 16.sp,
+                                fontSize = 14.sp,
                                 modifier = Modifier.align(Alignment.End)
                             )
                         }
                     }
-                    OrderListUi(
+                    TableOrderListUi(
                         firstOrder = firstOrder,
                         orderList = orderList,
                         onTap = { index : Int ->
@@ -221,7 +236,14 @@ fun TableInfoUi(
                         },
                         onDoubleTap = { menu : String, parentId : Int ->
                             orderViewModel.deleteOrUpdateOrder(menu, parentId)
+                        },
+                        onPriceChange = { price : Int ->
+                            onPriceChange(tableNum.toInt(), price)
                         }
+                    )
+                    Text(
+                        text = "총원 : ${getAllPrice(orderList.toMutableList())} 원",
+                        fontSize = 28.sp
                     )
                 }
                 Column(
@@ -252,12 +274,13 @@ fun TableInfoUi(
 }
 
 @Composable
-fun OrderListUi(
+fun TableOrderListUi(
     modifier: Modifier = Modifier,
     firstOrder : Int,
     orderList: List<OrderInfo>,
     onTap: (Int) -> Unit = {},
-    onDoubleTap: (String, Int) -> Unit = { _: String, _: Int -> }
+    onDoubleTap: (String, Int) -> Unit = { _: String, _: Int -> },
+    onPriceChange: (Int) -> Unit = {}
 ) {
     OrderCellTemplate("메뉴", "수량", "가격", "금액")
 
@@ -267,13 +290,15 @@ fun OrderListUi(
         items(orderList.size) { index ->
             val onTapToUnit = {
                 onTap(index)
+                onPriceChange(orderList[index].menuInfo.price)
             }
             val onDoubleTapToUnit = {
                 if (firstOrder != 0) {
                     onDoubleTap(orderList[index].menuInfo.name, firstOrder)
+                    onPriceChange(orderList[index].menuInfo.price * -1)
                 }
             }
-            OrderCell(
+            TableOrderCell(
                 orderInfo = orderList[index],
                 onTap = onTapToUnit,
                 onDoubleTap = onDoubleTapToUnit
@@ -281,3 +306,33 @@ fun OrderListUi(
         }
     }
 }
+
+@Composable
+fun TableOrderCell(
+    modifier: Modifier = Modifier,
+    orderInfo: OrderInfo,
+    onTap: () -> Unit = {},
+    onDoubleTap: () -> Unit = {},
+) {
+    Row(
+        modifier = modifier
+            .padding(horizontal = 10.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { _ -> onTap() },
+                    onDoubleTap = { _ -> onDoubleTap() }
+                )
+            }
+    ) {
+        Text(text = orderInfo.menuInfo.name,
+            modifier = modifier.weight(2f))
+        Text(text = orderInfo.quantity.value.toString(),
+            modifier = modifier.weight(1f))
+        Text(text = orderInfo.menuInfo.price.toString(),
+            modifier = modifier.weight(1f))
+        Text(text = "${orderInfo.quantity.value * orderInfo.menuInfo.price}",
+            modifier = modifier.weight(1f))
+    }
+}
+
+

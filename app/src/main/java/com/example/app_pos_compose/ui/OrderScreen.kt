@@ -11,12 +11,14 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,8 +61,7 @@ fun OrderScreen(
     val coroutineScope = rememberCoroutineScope()
 
     Box(
-        modifier
-            .fillMaxSize()
+        modifier.fillMaxSize()
             .padding(horizontal = 10.dp)
     ) {
         Column(
@@ -74,11 +75,9 @@ fun OrderScreen(
             Text(text = tableNum + "번")
             Text(text = "주문 목록")
             OrderListUi(
-                modifier = modifier,
-                firstOrder = firstOrder,
+                modifier = modifier.border(0.dp, Color.Black),
                 orderList = orderList,
                 onTap = {minusOrRemoveOrder(orderList, orderList[it])},
-                onDoubleTap = {_, index:Int -> minusOrRemoveOrder(orderList, orderList[index])}
             )
             OrderCellTemplate("총 금액 : ${getAllPrice(orderList)} 원")
         }
@@ -96,7 +95,6 @@ fun OrderScreen(
                         withContext(Dispatchers.IO) {
                             if (orderList.isNotEmpty()) {
                                 orderViewModel.insertOrderFromOrderList(orderList, tableNum, firstOrder)
-
                                 if(firstOrder == 0) {
                                     val fo = orderViewModel.setLastInsertOrder(orderList.size) // 테이블의 첫 주문번호
                                     onFirstOrderChange(tableNum.toInt(), fo)
@@ -213,32 +211,47 @@ fun OrderCellTemplate(
 }
 
 @Composable
+fun OrderListUi(
+    modifier: Modifier = Modifier,
+    orderList: List<OrderInfo>,
+    onTap: (Int) -> Unit = {},
+) {
+    OrderCellTemplate("메뉴", "수량", "가격", "금액")
+
+    LazyColumn(
+        modifier.defaultMinSize(minHeight = 200.dp)
+    ) {
+        items(orderList.size) { index ->
+            val onTapToUnit = { onTap(index) }
+            OrderCell(
+                orderInfo = orderList[index],
+                onTap = onTapToUnit,
+            )
+        }
+    }
+}
+
+@Composable
 fun OrderCell(
     modifier: Modifier = Modifier,
     orderInfo: OrderInfo,
     onTap: () -> Unit = {},
-    onDoubleTap: () -> Unit = {},
 ) {
     Row(
         modifier = modifier.padding(horizontal = 10.dp)
-            .pointerInput(Unit){
-                detectTapGestures(
-                    onTap = {_ -> onTap()},
-                    onDoubleTap = {_ -> onDoubleTap()}
-                )
-
-            }
+            .clickable { onTap() }
     ) {
         Text(text = orderInfo.menuInfo.name,
             modifier = modifier.weight(2f))
         Text(text = orderInfo.quantity.value.toString(),
-                modifier = modifier.weight(1f))
+            modifier = modifier.weight(1f))
         Text(text = orderInfo.menuInfo.price.toString(),
             modifier = modifier.weight(1f))
         Text(text = "${orderInfo.quantity.value * orderInfo.menuInfo.price}",
             modifier = modifier.weight(1f))
     }
 }
+
 
 data class MenuInfo(
     val name : String,

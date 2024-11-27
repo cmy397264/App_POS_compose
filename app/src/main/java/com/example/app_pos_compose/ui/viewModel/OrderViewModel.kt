@@ -68,6 +68,7 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
         }
     }
 
+    //UI에서 사용
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun insertOrderFromOrderList(
         orderList: MutableList<OrderInfo>,
@@ -78,7 +79,8 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
             orderRepository.insertItem(orderInfoToOrder(orderList[i], tableNum, firstOrder))
         }
     }
-
+    
+    //UI에서 사용
     suspend fun setLastInsertOrder(size : Int) : Int {
         val last = getLastInsertOrder()
         val first = last - size + 1
