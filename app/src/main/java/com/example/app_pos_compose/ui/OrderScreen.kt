@@ -1,6 +1,8 @@
 package com.example.app_pos_compose.ui
 
+import android.content.Context
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.border
@@ -34,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -62,11 +65,14 @@ fun OrderScreen(
         modifier.fillMaxSize()
             .padding(horizontal = 10.dp)
     ) {
+        val context = LocalContext.current
+
         Column(
             modifier.scrollable(
                 state = ScrollState(0),
                 orientation = Orientation.Vertical)
         ) {
+
             Text(text = "메뉴")
             MenuUi(onClick = { menuInfo: MenuInfo -> addOrder(orderList, menuInfo) })
 
@@ -89,21 +95,29 @@ fun OrderScreen(
         ) {
             FloatingActionButton(
                 onClick = {
-                    coroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            if (orderList.isNotEmpty()) {
-                                orderViewModel.insertOrderFromOrderList(orderList, tableNum, firstOrder)
-                                if(firstOrder == 0) {
-                                    val fo = orderViewModel.setLastInsertOrder(orderList.size) // 테이블의 첫 주문번호
+                    if(orderList.isNotEmpty()) {
+                        coroutineScope.launch {
+                            var fo = firstOrder
+                            withContext(Dispatchers.IO) {
+                                orderViewModel.insertOrderFromOrderList(orderList, tableNum, fo)
+                                if (fo == 0) { //테이블의 첫 주문번호가 존재하지 않는다면
+                                    // insert한 order들의 firstOrder를 처음 주문 id로 바꾸고사용한 id를 리턴
+                                    fo = orderViewModel.setLastInsertOrder(orderList.size)
                                     onFirstOrderChange(tableNum.toInt(), fo)
                                 }
+                                onClickSubmitButton(tableNum.toInt(), getAllPrice(orderList).toInt())
                             }
-                            onClickSubmitButton(tableNum.toInt(), getAllPrice(orderList).toInt())
-                        }
 
-                        withContext(Dispatchers.Main) {
-                            onClickCancelButton()
+                            withContext(Dispatchers.Main) {
+                                orderViewModel.getOrderList(fo)
+                            }
+
+                            withContext(Dispatchers.Main) {
+                                onClickCancelButton()
+                            }
                         }
+                    } else {
+                        makeToast(context, "주문 목록이 비어있습니다.")
                     }
                 },
                 modifier.padding(bottom = 50.dp)
@@ -290,4 +304,8 @@ fun minusOrRemoveOrder(orderList: MutableList<OrderInfo>, orderInfo: OrderInfo) 
             return
         }
     }
+}
+
+fun makeToast(context : Context, text : String){
+    Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 }

@@ -25,7 +25,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,10 +70,10 @@ fun MainNavigator(
             OrderScreen(
                 tableNum = tableViewModel.uiState.tableNum!!,
                 firstOrder = tableViewModel.uiState.firstOrder,
-                onFirstOrderChange = { tableNum: Int, firstOrder : Int ->
+                onFirstOrderChange = { tableNum : Int, firstOrder : Int ->
                     tableViewModel.updateFirstOrder(tableNum, firstOrder)
-                    tableViewModel.setFirstOrder(tableNum) },
-                onClickSubmitButton = { tableNum: Int, price : Int ->
+                    tableViewModel.changeFirstOrder(firstOrder) },
+                onClickSubmitButton = { tableNum, price : Int ->
                     tableViewModel.updatePrice(tableNum, price) },
                 onClickCancelButton = {
                     navController.popBackStack(NavScreen.Main.name, inclusive = false) }
@@ -89,7 +88,6 @@ fun MainNavigator(
                     navController.popBackStack(NavScreen.Main.name, inclusive = false)
                 },
             )
-
         }
     }
 }
@@ -111,13 +109,12 @@ fun TableScreen(
         )
     ) {
         TableListUi(
-            orderViewModel = orderViewModel,
             tableList = listUiState,
-            onClick = {
-                index ->
+            onClick = { index ->
                 tableViewModel.updateTableNum(index)
                 coroutineScope.launch {
-                    tableViewModel.setFirstOrder(index+1)
+                    tableViewModel.setFirstOrder(index + 1)
+                    orderViewModel.getOrderList(listUiState[index].firstOrder!!)
                 }
             }
         )
@@ -140,7 +137,6 @@ fun TableScreen(
 fun TableListUi(
     tableList : List<Table>,
     onClick: (Int) -> Unit,
-    orderViewModel: OrderViewModel
 ){
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -152,7 +148,6 @@ fun TableListUi(
                 context = tableList[index].price + "원",
                 onClick = {
                     onClick(index)
-                    orderViewModel.getOrderList(tableList[index].firstOrder!!)
                 }
             )
         }
@@ -200,7 +195,7 @@ fun TableInfoUi(
     onClickPay: () -> Unit,
     onPriceChange: (Int, Int) -> Unit
 ) {
-    val orderList by orderViewModel.orderList.collectAsState()
+    val orderList = orderViewModel.orderList.collectAsState().value
 
     when(tableNum){
         null ->

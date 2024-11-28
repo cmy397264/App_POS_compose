@@ -25,11 +25,18 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
                 initialValue = TableListUiState()
             )
     var uiState by mutableStateOf(TableUiState())
-
+    
+    
+    //UI함수에서 호출
     fun updateFirstOrder(tableNum: Int, firstOrder: Int) {
-        viewModelScope.launch {
-            roomRepository.updateFirstOrderById(tableNum, firstOrder)
-        }
+        roomRepository.updateFirstOrderById(tableNum, firstOrder)
+    }
+
+    //UI함수에서 호출
+    fun changeFirstOrder(firstOrder: Int){
+        uiState = uiState.copy(
+            firstOrder = firstOrder
+        )
     }
 
     fun setFirstOrder(tableNum: Int){

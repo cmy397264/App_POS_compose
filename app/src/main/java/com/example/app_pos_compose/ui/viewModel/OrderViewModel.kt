@@ -9,11 +9,14 @@ import com.example.app_pos_compose.data.Order
 import com.example.app_pos_compose.data.OrderRepository
 import com.example.app_pos_compose.ui.MenuInfo
 import com.example.app_pos_compose.ui.OrderInfo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
@@ -25,18 +28,16 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
     val orderList : StateFlow<List<OrderInfo>> = _orderList.asStateFlow()
 
     fun getOrderList(firstOrder : Int) {
-        viewModelScope.launch {
-            orderRepository.getOrderByParentId(firstOrder).collect { orders ->
-                _orderList.value = orders.groupBy {
-                    it.menu
-                }.map{ (menu, order) ->
-                    OrderInfo(
-                        menuInfo = MenuInfo(menu, order[0].price.toInt()),
-                        quantity = mutableIntStateOf(order.sumOf { it.quantity})
-                    )
-                }
+        orderRepository.getOrderByParentId(firstOrder).onEach { orders ->
+            _orderList.value = orders.groupBy {
+                it.menu
+            }.map { (menu, order) ->
+                OrderInfo(
+                    menuInfo = MenuInfo(menu, order[0].price.toInt()),
+                    quantity = mutableIntStateOf(order.sumOf { it.quantity })
+                )
             }
-        }
+        }.launchIn(CoroutineScope(Dispatchers.IO))
     }
 
     fun deleteOrUpdateOrder(menu: String, parentId: Int){
