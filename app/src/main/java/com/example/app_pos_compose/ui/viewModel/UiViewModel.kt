@@ -14,13 +14,8 @@ class UiViewModel : ViewModel() {
             currentSelectedTab = tab
         )
     }
-
-    fun updateIsMain(isMain : Boolean){
-        _uiState.value.isMain = isMain
-    }
 }
 
 data class UiState(
     var currentSelectedTab: Int = 0,
-    var isMain : Boolean = true
 )

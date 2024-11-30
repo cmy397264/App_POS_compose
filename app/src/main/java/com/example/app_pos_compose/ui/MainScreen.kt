@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,12 +57,10 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            if(uiState.value.isMain) {
-                TabBar(
-                    onTabClick = {tab -> uiViewModel.updateTab(tab = tab)},
-                    viewModel = uiViewModel
-                )
-            }
+            TabBar(
+                onTabClick = {tab -> uiViewModel.updateTab(tab = tab)},
+                viewModel = uiViewModel
+            )
             when (uiState.value.currentSelectedTab) {
                 TabNum.Table.ordinal -> {
                     MainNavigator()
@@ -80,36 +80,36 @@ fun MainScreen(
 
 @Composable
 fun TabBar(
+    modifier: Modifier = Modifier,
     onTabClick : (Int) -> Unit,
     viewModel: UiViewModel,
-    modifier: Modifier = Modifier
 ){
     Row(
-        modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp)
-            .border(0.dp, color = androidx.compose.ui.graphics.Color.Black),
-        horizontalArrangement = Arrangement.SpaceEvenly
+        modifier.fillMaxWidth()
+            .wrapContentHeight()
+            .border(1.dp, color = androidx.compose.ui.graphics.Color.Black),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly,
     ){
         Text(
             text = "table",
             textAlign = TextAlign.Center,
-            modifier = Modifier
-                .width(100.dp)
+            modifier = Modifier.width(100.dp)
+                .height(48.dp)
                 .clickable { onTabClick(TabNum.Table.ordinal) }
         )
         Text(
             text = "receipt",
             textAlign = TextAlign.Center,
-            modifier = Modifier
-                .width(100.dp)
+            modifier = Modifier.width(100.dp)
+                .height(48.dp)
                 .clickable { viewModel.updateTab(TabNum.Receipt.ordinal) }
         )
         Text(
             text = "setting",
             textAlign = TextAlign.Center,
-            modifier = Modifier
-                .width(100.dp)
+            modifier = Modifier.width(100.dp)
+                .height(48.dp)
                 .clickable { viewModel.updateTab(TabNum.Setting.ordinal) }
         )
     }

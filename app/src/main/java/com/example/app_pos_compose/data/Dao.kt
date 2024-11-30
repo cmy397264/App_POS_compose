@@ -84,10 +84,19 @@ interface OrderDao {
     @Query("DELETE FROM `order` WHERE id = (SELECT id FROM `order` WHERE menu = :menu and parentId = :parentId order by id desc limit 1)")
     fun deleteLastOrder(menu : String, parentId : Int)
 
+    @Query("DELETE FROM `order` WHERE menu = :menu and parentId =:id")
+    fun deleteOrderByMenu(menu : String, id : Int)
+
     @Query("UPDATE `order` SET quantity = quantity - 1 WHERE id = (SELECT id FROM `order` WHERE menu = :menu and parentId = :parentId order by id desc limit 1)")
     fun updateLastOrder(menu : String, parentId : Int)
 
     @Query("SELECT quantity FROM `order` WHERE menu = :menu and parentId = :parentId ORDER BY id DESC LIMIT 1")
     fun getQuantityFromLastOrder(menu : String, parentId : Int) : Flow<Int>
+
+    @Query("SELECT * FROM `order` WHERE menu = :menu and parentId = :parentId ORDER BY id DESC LIMIT 1")
+    fun getOrderByMenuAndParentId(menu : String, parentId : Int) : Flow<Order>
+
+    @Query("SELECT orderTime FROM `order` WHERE id = :firstOrder")
+    fun getFirstOrderTime(firstOrder : Int) : Flow<String>
 }
 

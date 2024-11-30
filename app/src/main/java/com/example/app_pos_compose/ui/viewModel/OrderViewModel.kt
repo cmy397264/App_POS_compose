@@ -2,7 +2,10 @@ package com.example.app_pos_compose.ui.viewModel
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.app_pos_compose.data.Order
@@ -27,6 +30,8 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
     private val _orderList = MutableStateFlow<List<OrderInfo>>(listOf())
     val orderList : StateFlow<List<OrderInfo>> = _orderList.asStateFlow()
 
+    var uiState by mutableStateOf(OrderUiState())
+
     fun getOrderList(firstOrder : Int) {
         orderRepository.getOrderByParentId(firstOrder).onEach { orders ->
             _orderList.value = orders.groupBy {
@@ -40,22 +45,10 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
         }.launchIn(CoroutineScope(Dispatchers.IO))
     }
 
-    fun deleteOrUpdateOrder(menu: String, parentId: Int){
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val quantity = orderRepository.getQuantityFromLastOrder(menu, parentId).first()
-                if (quantity > 1) {
-                    orderRepository.updateLastOrder(menu, parentId)
-                } else {
-                    orderRepository.deleteLastOrder(menu, parentId)
-                }
-            }
-        }
-    }
-
     @RequiresApi(Build.VERSION_CODES.O)
-    fun insertOrderFromOrderInfo(
+    fun insertOrder(
         orderInfo: OrderInfo,
+        quantity: Int,
         tableNum: String,
         firstOrder: Int?
     ){
@@ -64,7 +57,7 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
                 orderInfoToOrder(
                     OrderInfo(
                         orderInfo.menuInfo,
-                        mutableIntStateOf(1)
+                        mutableIntStateOf(quantity)
                     ), tableNum, firstOrder))
         }
     }
@@ -92,7 +85,47 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
     private suspend fun getLastInsertOrder(): Int {
         return orderRepository.getLastInsertOrder().first()
     }
+
+    suspend fun getOrderByMenuAndParentId(menu : String, parentId : Int) : Order {
+        return orderRepository.getOrderByMenuAndParentId(menu, parentId).first()
+    }
+
+    fun updateSelectedOrder(orderInfo: OrderInfo){
+        uiState = uiState.copy(
+            selectedOrder = orderInfo
+        )
+    }
+
+    fun deleteOrder(order: Order){
+        viewModelScope.launch {
+            orderRepository.deleteItem(order)
+        }
+    }
+
+    fun deleteByName(menu : String, firstOrder : Int){
+        orderRepository.deleteOrderByMenu(menu, firstOrder)
+    }
+
+    fun updateOrder(order: Order){
+        viewModelScope.launch {
+            orderRepository.updateItem(order)
+        }
+    }
+
+    fun getFirstOrderTime(firstOrder : Int){
+        viewModelScope.launch {
+            uiState = uiState.copy(
+                timeOfFirstOrder = orderRepository.getFirstOrderTime(firstOrder).first()
+            )
+        }
+    }
 }
+
+data class OrderUiState(
+    val selectedOrder : OrderInfo? = null,
+    val timeOfFirstOrder : String? = null
+)
+
 
 //LocalDateTime 사용
 @RequiresApi(Build.VERSION_CODES.O)

@@ -106,7 +106,7 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
 data class TableUiState(
     val tableNum: String? = null,
     val firstOrder : Int = 0,
-    var tableCount: String = ""
+    val tableCount: String = "",
 )
 
 data class TableListUiState(

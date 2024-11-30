@@ -4,16 +4,11 @@ import android.content.Context
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,9 +17,13 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -39,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.app_pos_compose.data.AppViewModelProvider
 import com.example.app_pos_compose.ui.viewModel.MenuViewModel
@@ -60,77 +60,66 @@ fun OrderScreen(
 ){
     val orderList = remember { mutableStateListOf<OrderInfo>() }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
-    Box(
-        modifier.fillMaxSize()
-            .padding(horizontal = 10.dp)
-    ) {
-        val context = LocalContext.current
-
+    Scaffold(
+        floatingActionButton = {
+            Column(
+                modifier = Modifier.padding(bottom = 10.dp)
+            ){
+                FloatingActionButton(
+                    modifier = Modifier.padding(bottom = 10.dp),
+                    onClick = {
+                        if(orderList.isNotEmpty()) {
+                            coroutineScope.launch {
+                                var fo = firstOrder
+                                withContext(Dispatchers.IO) {
+                                    orderViewModel.insertOrderFromOrderList(orderList, tableNum, fo)
+                                    if (fo == 0) { //테이블의 첫 주문번호가 존재하지 않는다면
+                                        // insert한 order들의 firstOrder를 처음 주문 id로 바꾸고사용한 id를 리턴
+                                        fo = orderViewModel.setLastInsertOrder(orderList.size)
+                                        onFirstOrderChange(tableNum.toInt(), fo)
+                                    }
+                                    onClickSubmitButton(tableNum.toInt(), getAllPrice(orderList).toInt())
+                                }
+                                withContext(Dispatchers.Main) {
+                                    orderViewModel.getOrderList(fo)
+                                    onClickCancelButton()
+                                }
+                            }
+                        } else {
+                            makeToast(context, "주문 목록이 비어있습니다.")
+                        }
+                    }
+                ) {
+                    Text("주문완료")
+                }
+                FloatingActionButton(onClick = onClickCancelButton) {
+                    Text("주문취소")
+                }
+            }
+        }
+    ) { innerPadding ->
         Column(
-            modifier.scrollable(
-                state = ScrollState(0),
-                orientation = Orientation.Vertical)
+            modifier.verticalScroll(state = rememberScrollState())
+                .padding(innerPadding)
         ) {
-
-            Text(text = "메뉴")
+            Text(
+                text = "메뉴",
+                Modifier.padding(start = 10.dp)
+            )
             MenuUi(onClick = { menuInfo: MenuInfo -> addOrder(orderList, menuInfo) })
-
-            Text(text = tableNum + "번")
-            Text(text = "주문 목록")
+            HorizontalDivider(thickness = 2.dp)
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(text = tableNum + "번 테이블 주문 목록")
             OrderListUi(
                 modifier = modifier.border(0.dp, Color.Black),
                 orderList = orderList,
                 onTap = {minusOrRemoveOrder(orderList, orderList[it])},
             )
-            OrderCellTemplate("총 금액 : ${getAllPrice(orderList)} 원")
-        }
-        Column(
-            modifier
-                .align(Alignment.BottomEnd)
-                .padding(
-                    bottom = 10.dp,
-                    end = 10.dp
-                )
-        ) {
-            FloatingActionButton(
-                onClick = {
-                    if(orderList.isNotEmpty()) {
-                        coroutineScope.launch {
-                            var fo = firstOrder
-                            withContext(Dispatchers.IO) {
-                                orderViewModel.insertOrderFromOrderList(orderList, tableNum, fo)
-                                if (fo == 0) { //테이블의 첫 주문번호가 존재하지 않는다면
-                                    // insert한 order들의 firstOrder를 처음 주문 id로 바꾸고사용한 id를 리턴
-                                    fo = orderViewModel.setLastInsertOrder(orderList.size)
-                                    onFirstOrderChange(tableNum.toInt(), fo)
-                                }
-                                onClickSubmitButton(tableNum.toInt(), getAllPrice(orderList).toInt())
-                            }
-
-                            withContext(Dispatchers.Main) {
-                                orderViewModel.getOrderList(fo)
-                            }
-
-                            withContext(Dispatchers.Main) {
-                                onClickCancelButton()
-                            }
-                        }
-                    } else {
-                        makeToast(context, "주문 목록이 비어있습니다.")
-                    }
-                },
-                modifier.padding(bottom = 50.dp)
-            ) {
-                Text("주문완료")
-            }
-
-            FloatingActionButton(
-                onClick = onClickCancelButton,
-                modifier.padding(bottom = 40.dp)
-            ) {
-                Text("주문취소")
-            }
+            Text("총 금액 : ${getAllPrice(orderList)} 원",
+                fontSize = 20.sp
+            )
         }
     }
 }
@@ -144,8 +133,8 @@ fun MenuUi(
     val menuList = menuViewModel.menuListUiState.collectAsState().value.menuList
 
     LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
-        modifier = modifier.height(300.dp)
+        columns = GridCells.Fixed(3),
+        modifier = modifier.height(350.dp)
     ) {
         items(menuList.size) { index ->
             MenuCard(
@@ -167,8 +156,7 @@ fun MenuCard(
     onClick: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .padding(10.dp)
+        modifier = Modifier.padding(10.dp)
             .clickable(onClick = onClick),
     ) {
         Column(
@@ -191,6 +179,28 @@ fun MenuCard(
 }
 
 @Composable
+fun OrderListUi(
+    modifier: Modifier = Modifier,
+    orderList: List<OrderInfo>,
+    height : Int = 250,
+    onTap: (Int) -> Unit = {},
+) {
+    OrderCellTemplate("메뉴", "수량", "가격", "금액")
+
+    LazyColumn(
+        modifier = modifier.height(height.dp),
+    ) {
+        items(orderList.size) { index ->
+            val onTapToUnit = {onTap(index) }
+            OrderCell(
+                orderInfo = orderList[index],
+                onTap = onTapToUnit,
+            )
+        }
+    }
+}
+
+@Composable
 fun OrderCellTemplate(
     firstColumn : String = "",
     secondColumn : String = "",
@@ -202,44 +212,31 @@ fun OrderCellTemplate(
             width = 0.dp,
             color = Color.Black,
             shape = RoundedCornerShape(1.dp))
+            .padding(horizontal = 10.dp)
     ) {
         Text(
             text = firstColumn,
+            fontSize = 18.sp,
             modifier = Modifier.weight(2f)
         )
         Text(
             text = secondColumn,
+            fontSize = 18.sp,
+            textAlign = TextAlign.End,
             modifier = Modifier.weight(1f)
         )
         Text(
             text = thirdColumn,
+            fontSize = 18.sp,
+            textAlign = TextAlign.End,
             modifier = Modifier.weight(1f)
         )
         Text(
             text = fourthColumn,
-            modifier = Modifier.weight(1f)
+            fontSize = 18.sp,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(2f)
         )
-    }
-}
-
-@Composable
-fun OrderListUi(
-    modifier: Modifier = Modifier,
-    orderList: List<OrderInfo>,
-    onTap: (Int) -> Unit = {},
-) {
-    OrderCellTemplate("메뉴", "수량", "가격", "금액")
-
-    LazyColumn(
-        modifier.defaultMinSize(minHeight = 200.dp)
-    ) {
-        items(orderList.size) { index ->
-            val onTapToUnit = { onTap(index) }
-            OrderCell(
-                orderInfo = orderList[index],
-                onTap = onTapToUnit,
-            )
-        }
     }
 }
 
@@ -250,18 +247,28 @@ fun OrderCell(
     onTap: () -> Unit = {},
 ) {
     Row(
-        modifier = modifier.padding(horizontal = 10.dp)
-            .clickable { onTap() }
+        modifier = modifier.height(48.dp)
+            .padding(horizontal = 10.dp)
+            .clickable { onTap() },
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = orderInfo.menuInfo.name,
-            modifier = modifier.weight(2f))
+            fontSize = 18.sp,
+            modifier = modifier.weight(6f))
         Text(text = orderInfo.quantity.value.toString(),
+            fontSize = 18.sp,
+            textAlign = TextAlign.End,
             modifier = modifier.weight(1f))
         Text(text = orderInfo.menuInfo.price.toString(),
-            modifier = modifier.weight(1f))
-        Text(text = "${orderInfo.quantity.value * orderInfo.menuInfo.price}",
-            modifier = modifier.weight(1f))
+            fontSize = 18.sp,
+            textAlign = TextAlign.End,
+            modifier = modifier.weight(2f))
+        Text(text = "${orderInfo.quantity.value * orderInfo.menuInfo.price} 원",
+            fontSize = 18.sp,
+            textAlign = TextAlign.End,
+            modifier = modifier.weight(3f))
     }
+    HorizontalDivider(thickness = 1.dp)
 }
 
 

@@ -45,7 +45,13 @@ class OrderRepository(private val orderDao: OrderDao) : OrderRepo {
 
     override fun deleteLastOrder(menu: String, parentId: Int) = orderDao.deleteLastOrder(menu, parentId)
 
+    override fun deleteOrderByMenu(menu: String, id: Int) = orderDao.deleteOrderByMenu(menu, id)
+
     override fun updateLastOrder(menu: String, parentId: Int) = orderDao.updateLastOrder(menu, parentId)
 
     override fun getQuantityFromLastOrder(menu: String, parentId: Int): Flow<Int> = orderDao.getQuantityFromLastOrder(menu, parentId)
+
+    override fun getOrderByMenuAndParentId(menu: String, parentId: Int): Flow<Order> = orderDao.getOrderByMenuAndParentId(menu, parentId)
+
+    override fun getFirstOrderTime(firstOrder: Int): Flow<String> = orderDao.getFirstOrderTime(firstOrder)
 }
