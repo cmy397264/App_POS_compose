@@ -10,6 +10,8 @@ class MenuRepository(private val menuDao: MenuDao) : MenuRepo {
     override suspend fun deleteItem(item: Menu) = menuDao.deleteMenu(item)
 
     override fun getAllItems(): Flow<List<Menu>> = menuDao.getAllMenu()
+
+    override fun deleteAll() = menuDao.deleteAll()
 }
 
 class TableRepository(private val tableDao: TableDao) : TableRepo {
@@ -25,6 +27,7 @@ class TableRepository(private val tableDao: TableDao) : TableRepo {
     override fun getFirstOrder(tableNum : Int) : Flow<Int> = tableDao.getFirstOrder(tableNum)
     override fun updateFirstOrderById(tableNum: Int, firstOrder: Int) = tableDao.updateFirstOrderById(tableNum, firstOrder)
     override fun updatePriceById(tableNum: Int, price : Int) = tableDao.updatePriceById(tableNum, price)
+    override fun deleteAll() = tableDao.deleteAll()
 }
 
 class OrderRepository(private val orderDao: OrderDao) : OrderRepo {
@@ -54,4 +57,14 @@ class OrderRepository(private val orderDao: OrderDao) : OrderRepo {
     override fun getOrderByMenuAndParentId(menu: String, parentId: Int): Flow<Order> = orderDao.getOrderByMenuAndParentId(menu, parentId)
 
     override fun getFirstOrderTime(firstOrder: Int): Flow<String> = orderDao.getFirstOrderTime(firstOrder)
+
+    override fun getPriceByParentId(id: Int): Flow<Int> = orderDao.getPriceByParentId(id)
+
+    override fun updateIsDone(firstOrder: Int) = orderDao.updateIsDone(firstOrder)
+
+    override fun getIsDoneByName(menu: String): Flow<Int> = orderDao.getIsDoneByName(menu)
+
+    override fun deleteAll() = orderDao.deleteAll()
+
+    override fun getOrderGroupByParentId() : Flow<List<Order>> = orderDao.getOrderGroupByParentId()
 }

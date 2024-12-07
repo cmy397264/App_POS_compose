@@ -51,7 +51,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun OrderScreen(
     modifier: Modifier = Modifier,
-    orderViewModel: OrderViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    orderViewModel: OrderViewModel,
     tableNum: String,
     firstOrder: Int,
     onFirstOrderChange: (Int, Int) -> Unit = { _, _ ->},
@@ -80,12 +80,12 @@ fun OrderScreen(
                                         fo = orderViewModel.setLastInsertOrder(orderList.size)
                                         onFirstOrderChange(tableNum.toInt(), fo)
                                     }
-                                    onClickSubmitButton(tableNum.toInt(), getAllPrice(orderList).toInt())
-                                }
-                                withContext(Dispatchers.Main) {
+                                    val price = orderViewModel.getPriceById(fo)
+                                    onClickSubmitButton(tableNum.toInt(), price)
                                     orderViewModel.getOrderList(fo)
-                                    onClickCancelButton()
                                 }
+
+                                onClickCancelButton()
                             }
                         } else {
                             makeToast(context, "주문 목록이 비어있습니다.")

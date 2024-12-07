@@ -7,6 +7,7 @@ interface MenuRepo {
     suspend fun updateItem(item : Menu)
     suspend fun deleteItem(item : Menu)
     fun getAllItems(): Flow<List<Menu>>
+    fun deleteAll()
 }
 
 interface TableRepo {
@@ -19,6 +20,7 @@ interface TableRepo {
     fun updateFirstOrderById(tableNum: Int, firstOrder: Int)
     fun getFirstOrder(tableNum : Int) : Flow<Int>
     fun updatePriceById(tableNum: Int, price : Int)
+    fun deleteAll()
 }
 
 interface OrderRepo {
@@ -33,7 +35,12 @@ interface OrderRepo {
     fun deleteLastOrder(menu : String, parentId : Int)
     fun deleteOrderByMenu(menu : String, id : Int)
     fun updateLastOrder(menu : String, parentId : Int)
+    fun updateIsDone(firstOrder : Int)
     fun getQuantityFromLastOrder(menu : String, parentId : Int) : Flow<Int>
     fun getOrderByMenuAndParentId(menu : String, parentId : Int) : Flow<Order>
     fun getFirstOrderTime(firstOrder : Int) : Flow<String>
+    fun getPriceByParentId(id : Int) : Flow<Int>
+    fun getIsDoneByName(menu : String) : Flow<Int>
+    fun deleteAll()
+    fun getOrderGroupByParentId() : Flow<List<Order>>
 }

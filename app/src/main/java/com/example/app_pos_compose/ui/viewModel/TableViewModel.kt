@@ -17,12 +17,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class TableViewModel(private val roomRepository: TableRepository) : ViewModel() {
-    val tableListUiState: StateFlow<TableListUiState> =
-        roomRepository.getAllItems().map { TableListUiState(it) }
+    val tableListUiState: StateFlow<List<Table>> =
+        roomRepository.getAllItems().map { it }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = TableListUiState()
+                initialValue = listOf()
             )
     var uiState by mutableStateOf(TableUiState())
     
@@ -47,17 +47,11 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
         }
     }
 
-    fun resetTable(tableNum : Int){
-        updatePrice(tableNum, 0)
-        updateFirstOrder(tableNum, 0)
-    }
 
+
+    //UI함수에서 호출
     fun updatePrice(tableNum: Int, price: Int) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                roomRepository.updatePriceById(tableNum, price)
-            }
-        }
+        roomRepository.updatePriceById(tableNum, price)
     }
 
     fun updateTableNum(tableNum: Int) {
@@ -73,14 +67,14 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
         }
     }
 
-    private fun getTableCount(): String {
-        return tableListUiState.value.tableList.size.toString()
+    private fun getTableCount(): Int {
+        return tableListUiState.value.size
     }
 
     fun insertOrDeleteTable(isInsert: Boolean, tableNum: Int) {
         viewModelScope.launch {
             if (isInsert) {
-                for (i in getTableCount().toInt() + 1..tableNum) {
+                for (i in getTableCount() + 1..tableNum) {
                     roomRepository.insertItem(
                         Table(
                             id = 0,
@@ -98,8 +92,12 @@ class TableViewModel(private val roomRepository: TableRepository) : ViewModel() 
     }
 
     fun isNullOrIntTableCount(): Int {
-        if (uiState.tableCount.isEmpty()) return tableListUiState.value.tableList.size
+        if (uiState.tableCount.isEmpty()) return tableListUiState.value.size
         return uiState.tableCount.toInt()
+    }
+
+    fun deleteAll(){
+        roomRepository.deleteAll()
     }
 }
 
@@ -107,8 +105,4 @@ data class TableUiState(
     val tableNum: String? = null,
     val firstOrder : Int = 0,
     val tableCount: String = "",
-)
-
-data class TableListUiState(
-    val tableList : List<Table> = listOf()
 )

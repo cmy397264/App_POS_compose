@@ -23,6 +23,9 @@ interface MenuDao {
 
     @Query("SELECT COUNT(*) FROM `menu`")
     fun countMenu() : Flow<Int>
+
+    @Query("DELETE FROM `menu`")
+    fun deleteAll()
 }
 
 @Dao
@@ -51,8 +54,11 @@ interface TableDao {
     @Query("UPDATE `table` SET firstOrder = :firstOrder WHERE tableNum = :tableNum")
     fun updateFirstOrderById(tableNum: Int, firstOrder : Int)
 
-    @Query("UPDATE 'table' SET price = price + :price WHERE tableNum = :tableNum")
+    @Query("UPDATE 'table' SET price = :price WHERE tableNum = :tableNum")
     fun updatePriceById(tableNum: Int, price : Int)
+
+    @Query("DELETE FROM `table`")
+    fun deleteAll()
 }
 
 @Dao
@@ -78,6 +84,9 @@ interface OrderDao {
     @Query("SELECT id FROM 'order' ORDER BY id DESC LIMIT 1")
     fun getLastInsertOrder() : Flow<Int>
 
+    @Query("SELECT sum(price * quantity) FROM `order` WHERE parentId = :id")
+    fun getPriceByParentId(id : Int) : Flow<Int>
+
     @Query("update `order` set parentId = :first where id >= :first and id <= :last")
     fun updateFirstOrder( first: Int, last: Int)
 
@@ -96,7 +105,19 @@ interface OrderDao {
     @Query("SELECT * FROM `order` WHERE menu = :menu and parentId = :parentId ORDER BY id DESC LIMIT 1")
     fun getOrderByMenuAndParentId(menu : String, parentId : Int) : Flow<Order>
 
+    @Query("SELECT * FROM `order` group by parentId order by id desc")
+    fun getOrderGroupByParentId() : Flow<List<Order>>
+
     @Query("SELECT orderTime FROM `order` WHERE id = :firstOrder")
     fun getFirstOrderTime(firstOrder : Int) : Flow<String>
+
+    @Query("SElECT COUNT(isDone) FROM `order` WHERE menu = :menu")
+    fun getIsDoneByName(menu : String) : Flow<Int>
+
+    @Query("UPDATE `order` SET isDone = 1 WHERE parentId = :firstOrder")
+    fun updateIsDone(firstOrder : Int)
+
+    @Query("DELETE FROM `order`")
+    fun deleteAll()
 }
 

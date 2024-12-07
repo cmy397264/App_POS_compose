@@ -12,13 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -41,14 +42,53 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,) {
-                Text(
-                    text = "UFPOS",
-                    modifier = modifier
-                        .padding(10.dp))
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "UFPOS",
+                        modifier = modifier
+                            .padding(10.dp)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .height(48.dp)
+                        .border(1.dp, color = Color.Black),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ){
+                    Text(
+                        text = "table",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(120.dp)
+                            .height(40.dp)
+                            .clickable { uiViewModel.updateTab(TabNum.Table.ordinal) }
+                            .padding(vertical = 8.dp)
+                    )
+                    VerticalDivider(modifier = Modifier.height(48.dp))
+                    Text(
+                        text = "receipt",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(120.dp)
+                            .height(40.dp)
+                            .clickable { uiViewModel.updateTab(TabNum.Receipt.ordinal) }
+                            .padding(vertical = 8.dp)
+                    )
+                    VerticalDivider(modifier = Modifier.height(48.dp))
+                    Text(
+                        text = "setting",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(120.dp)
+                            .height(40.dp)
+                            .clickable { uiViewModel.updateTab(TabNum.Setting.ordinal) }
+                            .padding(vertical = 8.dp)
+                    )
+                }
             }
         }
     ) {innerPadding ->
@@ -57,10 +97,6 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            TabBar(
-                onTabClick = {tab -> uiViewModel.updateTab(tab = tab)},
-                viewModel = uiViewModel
-            )
             when (uiState.value.currentSelectedTab) {
                 TabNum.Table.ordinal -> {
                     MainNavigator()
@@ -75,42 +111,5 @@ fun MainScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun TabBar(
-    modifier: Modifier = Modifier,
-    onTabClick : (Int) -> Unit,
-    viewModel: UiViewModel,
-){
-    Row(
-        modifier.fillMaxWidth()
-            .wrapContentHeight()
-            .border(1.dp, color = androidx.compose.ui.graphics.Color.Black),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-    ){
-        Text(
-            text = "table",
-            textAlign = TextAlign.Center,
-            modifier = Modifier.width(100.dp)
-                .height(48.dp)
-                .clickable { onTabClick(TabNum.Table.ordinal) }
-        )
-        Text(
-            text = "receipt",
-            textAlign = TextAlign.Center,
-            modifier = Modifier.width(100.dp)
-                .height(48.dp)
-                .clickable { viewModel.updateTab(TabNum.Receipt.ordinal) }
-        )
-        Text(
-            text = "setting",
-            textAlign = TextAlign.Center,
-            modifier = Modifier.width(100.dp)
-                .height(48.dp)
-                .clickable { viewModel.updateTab(TabNum.Setting.ordinal) }
-        )
     }
 }

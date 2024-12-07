@@ -24,19 +24,19 @@ class MenuViewModel(private val roomRepository: MenuRepository) : ViewModel() {
                 initialValue = MenuListUiState()
             )
 
-    fun updateUiState(menuDetails: MenuDetails = MenuDetails()){
-        menuUiState = MenuUiState(menuDetails = menuDetails, isEntryValid = validateInput(menuDetails))
+    fun updateUiState(menu: Menu = Menu()){
+        menuUiState = MenuUiState(menu = menu, isEntryValid = validateInput(menu))
     }
 
-    private fun validateInput(uiState: MenuDetails = menuUiState.menuDetails) : Boolean{
-        return with(uiState){
+    private fun validateInput(menu: Menu = menuUiState.menu) : Boolean{
+        return with(menu){
             name.isNotBlank() && price.isNotBlank()
         }
     }
 
     suspend fun saveMenu(){
-        if(validateInput()){
-            roomRepository.insertItem(menuUiState.menuDetails.toMenu())
+        if(validateInput(menuUiState.menu)){
+            roomRepository.insertItem(menuUiState.menu)
         }
     }
 
@@ -45,36 +45,19 @@ class MenuViewModel(private val roomRepository: MenuRepository) : ViewModel() {
     }
 
     suspend fun updateMenu(){
-        if(validateInput(menuUiState.menuDetails)){
-            roomRepository.updateItem(menuUiState.menuDetails.toMenu())
+        if(validateInput(menuUiState.menu)){
+            roomRepository.updateItem(menuUiState.menu)
         }
+    }
+
+    fun deleteAll(){
+        roomRepository.deleteAll()
     }
 }
 
-fun MenuDetails.toMenu(): Menu = Menu(
-        id = 0,
-        name = name,
-        price = price
-)
-
-fun Menu.toMenuUiState(isEntryValid: Boolean = false): MenuUiState = MenuUiState(
-        menuDetails = this.toMenuDetails(),
-        isEntryValid = isEntryValid
-)
-
-fun Menu.toMenuDetails(): MenuDetails = MenuDetails(
-        name = name,
-        price = price
-)
-
 data class MenuUiState(
-    val menuDetails : MenuDetails = MenuDetails(),
+    val menu : Menu = Menu(),
     val isEntryValid : Boolean = false
-)
-
-data class MenuDetails(
-    val name : String = "",
-    val price : String = "",
 )
 
 data class MenuListUiState(val menuList : List<Menu> = listOf())

@@ -6,9 +6,9 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "menu")
 data class Menu(
     @PrimaryKey(autoGenerate = true)
-    val id : Int,
-    var name : String,
-    var price : String,
+    val id : Int = 0,
+    var name : String = "",
+    var price : String = "",
 )
 
 @Entity(tableName = "table")
@@ -27,7 +27,8 @@ data class Order (
     val parentId : Int? = id,
     val orderTable : String,
     val menu : String,
-    val price : String,
+    val price : Int,
     var quantity : Int,
-    val orderTime : String
+    val orderTime : String,
+    val isDone : Boolean = false
 )

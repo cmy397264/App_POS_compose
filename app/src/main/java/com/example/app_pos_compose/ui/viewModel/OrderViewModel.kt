@@ -15,13 +15,14 @@ import com.example.app_pos_compose.ui.OrderInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -38,15 +39,24 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
                 it.menu
             }.map { (menu, order) ->
                 OrderInfo(
-                    menuInfo = MenuInfo(menu, order[0].price.toInt()),
+                    menuInfo = MenuInfo(menu, order[0].price),
                     quantity = mutableIntStateOf(order.sumOf { it.quantity })
                 )
             }
         }.launchIn(CoroutineScope(Dispatchers.IO))
     }
 
+    private val _receiptList = orderRepository.getOrderGroupByParentId()
+        .stateIn(
+            scope = CoroutineScope(Dispatchers.IO), // 실행할 CoroutineScope
+            started = SharingStarted.Eagerly,      // 즉시 실행
+            initialValue = listOf()                // 초기값 설정
+        )
+    val receiptList: StateFlow<List<Order>> = _receiptList
+
+
     @RequiresApi(Build.VERSION_CODES.O)
-    fun insertOrder(
+    suspend fun insertOrder(
         orderInfo: OrderInfo,
         quantity: Int,
         tableNum: String,
@@ -89,27 +99,35 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
     suspend fun getOrderByMenuAndParentId(menu : String, parentId : Int) : Order {
         return orderRepository.getOrderByMenuAndParentId(menu, parentId).first()
     }
-
+    
+    //UiState 변경
     fun updateSelectedOrder(orderInfo: OrderInfo){
         uiState = uiState.copy(
             selectedOrder = orderInfo
         )
     }
 
-    fun deleteOrder(order: Order){
-        viewModelScope.launch {
-            orderRepository.deleteItem(order)
-        }
+    fun updateSelectedReceipt(order: Order){
+        uiState = uiState.copy(
+            selectedReceipt = order
+        )
     }
 
-    fun deleteByName(menu : String, firstOrder : Int){
+    fun updateIsDone(firstOrder: Int){
+        orderRepository.updateIsDone(firstOrder)
+    }
+    
+    //UI에서 코루틴 범위 사용
+    suspend fun deleteOrder(order: Order){
+        orderRepository.deleteItem(order)
+    }
+
+    fun deleteAllOrderByName(menu : String, firstOrder : Int){
         orderRepository.deleteOrderByMenu(menu, firstOrder)
     }
 
-    fun updateOrder(order: Order){
-        viewModelScope.launch {
+    suspend fun updateOrder(order: Order){
             orderRepository.updateItem(order)
-        }
     }
 
     fun getFirstOrderTime(firstOrder : Int){
@@ -119,11 +137,24 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
             )
         }
     }
+
+    suspend fun getPriceById(firstOrder: Int) : Int {
+        return orderRepository.getPriceByParentId(firstOrder).first()
+    }
+
+    suspend fun getIsDoneByMenu(menu : String) : Int {
+        return orderRepository.getIsDoneByName(menu).first()
+    }
+
+    fun deleteAll(){
+        orderRepository.deleteAll()
+    }
 }
 
 data class OrderUiState(
     val selectedOrder : OrderInfo? = null,
-    val timeOfFirstOrder : String? = null
+    val timeOfFirstOrder : String? = null,
+    val selectedReceipt : Order? = null
 )
 
 
@@ -135,7 +166,7 @@ fun orderInfoToOrder(orderInfo: OrderInfo, tableNum : String, firstOrder : Int?)
         parentId = firstOrder,
         orderTable = tableNum,
         menu = orderInfo.menuInfo.name,
-        price = orderInfo.menuInfo.price.toString(),
+        price = orderInfo.menuInfo.price,
         quantity = orderInfo.quantity.value,
         orderTime = LocalDateTime.now()
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))

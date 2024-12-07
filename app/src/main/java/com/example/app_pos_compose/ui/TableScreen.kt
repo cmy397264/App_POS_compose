@@ -87,6 +87,7 @@ fun MainNavigator(
         }
         composable(NavScreen.Order.name){
             OrderScreen(
+                orderViewModel = orderViewModel,
                 tableNum = tableViewModel.uiState.tableNum!!,
                 firstOrder = tableViewModel.uiState.firstOrder,
                 onFirstOrderChange = { tableNum : Int, firstOrder : Int ->
@@ -102,7 +103,11 @@ fun MainNavigator(
             PayScreen(
                 orderViewModel = orderViewModel,
                 tableNum = tableViewModel.uiState.tableNum!!,
-                onClickSubmitButton = tableViewModel :: resetTable,
+                firstOrder = tableViewModel.uiState.firstOrder,
+                onClickSubmitButton = { tableNum : Int ->
+                    tableViewModel.updatePrice(tableNum, 0)
+                    tableViewModel.updateFirstOrder(tableNum, 0)
+                },
                 onClickCancelButton = {
                     navController.popBackStack(NavScreen.Main.name, inclusive = false)
                 },
@@ -119,7 +124,7 @@ fun TableScreen(
     navController: NavController
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val listUiState = tableViewModel.tableListUiState.collectAsState().value.tableList
+    val listUiState by tableViewModel.tableListUiState.collectAsState()
     var openTableOrderDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -312,7 +317,7 @@ fun TableOrderDialog(
         properties = DialogProperties(
             dismissOnBackPress = true,
             dismissOnClickOutside = true,
-            decorFitsSystemWindows = false
+            decorFitsSystemWindows = true
         )
     ) {
         var newQuantity by remember { mutableStateOf("${selectedOrder.quantity.value}") }
@@ -324,7 +329,7 @@ fun TableOrderDialog(
             shape = RoundedCornerShape(10.dp)
         ) {
             Column(
-                modifier = modifier.padding(10.dp),
+                modifier = modifier.padding(5.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -352,57 +357,50 @@ fun TableOrderDialog(
                 ) {
                     Button(
                         onClick = {
-                            coroutineScope.launch {
-                                if(newQuantity.toInt() == selectedOrder.quantity.value) onClickCancel()
-                                else if (newQuantity.toInt() == 0) {//quantity를 0으로 설정하면 해당 테이블에서 입력된 메뉴를 전부 삭제한다.
-                                    withContext(Dispatchers.IO) {
-                                        orderViewModel.deleteByName(
-                                            selectedOrder.menuInfo.name,
-                                            firstOrder
-                                        )
-                                    }
-                                    withContext(Dispatchers.Main) {
-                                        tableViewModel.updatePrice(
-                                            tableNum.toInt(),
-                                            selectedOrder.menuInfo.price * selectedOrder.quantity.value * -1
-                                        )
-                                    }
-                                } else {
-                                    val nQ = newQuantity.toInt() - selectedOrder.quantity.value
-                                    withContext(Dispatchers.IO) {
-                                        if (newQuantity.toInt() > selectedOrder.quantity.value) {//기존 quantity보다 수정값이 더 높다면 주문을 추가한다.
-                                            orderViewModel.insertOrder(
-                                                selectedOrder,
-                                                nQ,
-                                                tableNum,
-                                                firstOrder
-                                            )
-                                        } else {//기존 quantity보다 수정값이 낮다면 마지막 주문을 불러와 quantity를 불러온다
-                                            var order = orderViewModel.getOrderByMenuAndParentId(
-                                                selectedOrder.menuInfo.name,
-                                                firstOrder
-                                            )
-                                            while (newQuantity.toInt() - order.quantity >= 0) {//불러온 값이 수정값보다 작다면
-                                                newQuantity = (newQuantity.toInt() -order.quantity).toString() //수정값을 불러온 값만큼 감소시키고
-                                                orderViewModel.deleteOrder(order)//해당 테이블에서 마지막으로 주문된 주문을 삭제한다.
-                                                order = orderViewModel.getOrderByMenuAndParentId(
+                                if(newQuantity.toInt() != selectedOrder.quantity.value) {
+                                    coroutineScope.launch {
+                                        withContext(Dispatchers.IO) {
+                                            if (newQuantity.toInt() == 0) {//quantity를 0으로 설정하면 해당 테이블에서 입력된 메뉴를 전부 삭제한다.
+                                                orderViewModel.deleteAllOrderByName(
                                                     selectedOrder.menuInfo.name,
                                                     firstOrder
-                                                )//마지막 주문을 새로 불러온다.
+                                                )
+                                            } else if (newQuantity.toInt() > selectedOrder.quantity.value) {//기존 quantity보다 수정값이 더 높다면 주문을 추가한다.
+                                                orderViewModel.insertOrder(
+                                                    selectedOrder,
+                                                    newQuantity.toInt() - selectedOrder.quantity.value,
+                                                    tableNum,
+                                                    firstOrder
+                                                )
+                                            } else {//기존 quantity보다 수정값이 낮다면 마지막 주문을 불러와 quantity를 불러온다
+                                                var order =
+                                                    orderViewModel.getOrderByMenuAndParentId(
+                                                        selectedOrder.menuInfo.name,
+                                                        firstOrder
+                                                    )
+                                                while (newQuantity.toInt() - order.quantity >= 0) {//불러온 값이 수정값보다 작다면
+                                                    newQuantity =
+                                                        (newQuantity.toInt() - order.quantity).toString() //수정값을 불러온 값만큼 감소시키고
+                                                    orderViewModel.deleteOrder(order)//해당 테이블에서 마지막으로 주문된 주문을 삭제한다.
+                                                    order =
+                                                        orderViewModel.getOrderByMenuAndParentId(
+                                                            selectedOrder.menuInfo.name,
+                                                            firstOrder
+                                                        )//마지막 주문을 새로 불러온다.
+                                                }
+                                                order.quantity = newQuantity.toInt()
+                                                orderViewModel.updateOrder(order)
                                             }
-                                            order.quantity = newQuantity.toInt()
-                                            orderViewModel.updateOrder(order)
+                                            val price = orderViewModel.getPriceById(firstOrder)
+                                            if(price == 0){
+                                                tableViewModel.updateFirstOrder(tableNum.toInt(), 0)
+                                            }
+                                            tableViewModel.updatePrice(tableNum.toInt(), price)
+                                            orderViewModel.getOrderList(firstOrder)
                                         }
                                     }
-                                    withContext(Dispatchers.Main){
-                                        tableViewModel.updatePrice(
-                                            tableNum.toInt(),
-                                            nQ * selectedOrder.menuInfo.price
-                                        )
-                                    }
                                 }
-                                onClickCancel()
-                            }
+                            onClickCancel()
                         }
                     ){
                         Text("수정 완료")

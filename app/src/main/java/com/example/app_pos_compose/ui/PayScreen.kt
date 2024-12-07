@@ -11,22 +11,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.app_pos_compose.ui.viewModel.OrderViewModel
-import kotlin.reflect.KFunction1
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun PayScreen(
     orderViewModel: OrderViewModel,
     tableNum: String,
-    onClickSubmitButton: KFunction1<Int, Unit>,
+    firstOrder: Int,
+    onClickSubmitButton: (Int) -> Unit,
     onClickCancelButton: () -> Unit
 ){
     val orderList by orderViewModel.orderList.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         floatingActionButton = { Column(
@@ -34,7 +39,18 @@ fun PayScreen(
             ) {
                 FloatingActionButton(
                     modifier = Modifier.padding(bottom = 10.dp),
-                    onClick = {onClickSubmitButton(tableNum.toInt()) }
+                    onClick = {
+                        coroutineScope.launch {
+                            withContext(Dispatchers.IO) {
+                                onClickSubmitButton(tableNum.toInt())
+                                orderViewModel.updateIsDone(firstOrder)
+                                orderViewModel.getOrderList(0)
+                            }
+                            withContext(Dispatchers.Main){
+                                onClickCancelButton()
+                            }
+                        }
+                    }
                 ) {
                     Text("결제완료")
                 }
