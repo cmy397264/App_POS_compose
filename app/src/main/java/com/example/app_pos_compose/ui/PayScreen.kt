@@ -44,7 +44,7 @@ fun PayScreen(
                             withContext(Dispatchers.IO) {
                                 onClickSubmitButton(tableNum.toInt())
                                 orderViewModel.updateIsDone(firstOrder)
-                                orderViewModel.getOrderList(0)
+                                orderViewModel.updateOrderList(0)
                             }
                             withContext(Dispatchers.Main){
                                 onClickCancelButton()

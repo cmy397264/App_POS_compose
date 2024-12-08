@@ -24,6 +24,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
@@ -161,11 +162,11 @@ fun TableScreen(
                         tableViewModel.updateTableNum(index)
                         coroutineScope.launch {
                             tableViewModel.setFirstOrder(index + 1)
-                            orderViewModel.getOrderList(listUiState[index].firstOrder!!)
+                            orderViewModel.updateOrderList(listUiState[index].firstOrder!!)
                         }
                     }
                 )
-                HorizontalDivider(thickness = 2.dp)
+                HorizontalDivider(thickness = 2.dp, color = Color(0xFFA5D6A7))
                 Spacer(modifier = Modifier.height(10.dp))
                 TableInfoUi(
                     modifier = Modifier.fillMaxWidth(),
@@ -227,6 +228,9 @@ fun TableCard(
         modifier = Modifier
             .padding(10.dp)
             .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE8F5E9),
+        )
     ) {
         Column(
             modifier = Modifier
@@ -264,24 +268,22 @@ fun TableInfoUi(
                 modifier = Modifier.padding(start = 10.dp, top = 10.dp)
             )
         else -> {
-            Column(modifier.padding(horizontal = 10.dp)) {
-                Row{
+            Column(
+                modifier = modifier.padding(horizontal = 10.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
                     Text(
                         text = "테이블 ${tableNum}번",
                         fontSize = 28.sp
                     )
-                    Column(modifier) {
-                        Text(
-                            text = "한번 터치 = 메뉴 추가",
-                            fontSize = 14.sp,
-                            modifier = Modifier.align(Alignment.End)
-                        )
-                        Text(
-                            text = "두번 터치 = 메뉴 삭제",
-                            fontSize = 14.sp,
-                            modifier = Modifier.align(Alignment.End)
-                        )
-                    }
+                    Text(
+                        text = "터치로 주문 수정",
+                        fontSize = 14.sp,
+                    )
                 }
                 OrderListUi(
                     orderList = orderList,
@@ -290,7 +292,7 @@ fun TableInfoUi(
                         onOrderClick()
                     }
                 )
-                HorizontalDivider(thickness = 2.dp)
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = "총 금액 : ${getAllPrice(orderList.toMutableList())} 원",
                     fontSize = 28.sp,
@@ -330,7 +332,7 @@ fun TableOrderDialog(
         ) {
             Column(
                 modifier = modifier.padding(5.dp),
-                verticalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -353,7 +355,8 @@ fun TableOrderDialog(
                     modifier = modifier.width(200.dp)
                 )
                 Row(
-                    modifier.padding(horizontal = 10.dp)
+                    modifier.padding(horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Button(
                         onClick = {
@@ -396,16 +399,24 @@ fun TableOrderDialog(
                                                 tableViewModel.updateFirstOrder(tableNum.toInt(), 0)
                                             }
                                             tableViewModel.updatePrice(tableNum.toInt(), price)
-                                            orderViewModel.getOrderList(firstOrder)
+                                            orderViewModel.updateOrderList(firstOrder)
                                         }
                                     }
                                 }
                             onClickCancel()
-                        }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 5.dp),
                     ){
                         Text("수정 완료")
                     }
-                    Button(onClick = onClickCancel) {
+                    Button(
+                        onClick = onClickCancel,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 5.dp),
+                    ) {
                         Text("수정 취소")
                     }
                 }

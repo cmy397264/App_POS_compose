@@ -23,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,17 +33,21 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.room.Embedded
 import com.example.app_pos_compose.data.AppViewModelProvider
 import com.example.app_pos_compose.data.Order
 import com.example.app_pos_compose.ui.viewModel.OrderViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ReceiptUi(
     orderViewModel: OrderViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ){
     Scaffold { innerPadding ->
-
-        val orderList by orderViewModel.orderList.collectAsState()
+        var orderList by remember { mutableStateOf(listOf<OrderInfo>()) }
+        val coroutineScope = rememberCoroutineScope()
         val receiptList by orderViewModel.receiptList.collectAsState()
         var openReceiptDialog by remember { mutableStateOf(false) }
 
@@ -64,9 +69,15 @@ fun ReceiptUi(
                     ReceiptCard(
                         receipt = receiptList[index],
                         onClick = {
-                            orderViewModel.getOrderList(receiptList[index].parentId!!)
-                            orderViewModel.updateSelectedReceipt(receiptList[index])
-                            openReceiptDialog = true
+                            coroutineScope.launch {
+                                withContext(Dispatchers.IO) {
+                                    orderList = orderViewModel.getOrderList(receiptList[index].order.parentId!!)
+                                }
+                                withContext(Dispatchers.Default){
+                                    orderViewModel.updateSelectedReceipt(receiptList[index])
+                                }
+                                openReceiptDialog = true
+                            }
                         }
                     )
                 }
@@ -86,7 +97,7 @@ fun ReceiptUi(
 
 @Composable
 fun ReceiptDialog(
-    receipt: Order,
+    receipt: Receipt,
     orderList: List<OrderInfo>,
     onClickCancel: () -> Unit
 ) {
@@ -107,7 +118,7 @@ fun ReceiptDialog(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 Text(
-                    text ="테이블 ${receipt.orderTable} 번",
+                    text ="테이블 ${receipt.order.orderTable} 번",
                     fontSize = 24.sp,
                     modifier = Modifier.padding(start = 10.dp)
                 )
@@ -133,13 +144,13 @@ fun ReceiptDialog(
 
 @Composable
 fun ReceiptCard(
-    receipt: Order,
+    receipt: Receipt,
     onClick: () -> Unit = {}
 )
     {
 
-    val backgroundColor = if(receipt.isDone) Color(0xFFE8F5E9) else Color(0xFFA5D6A7)
-    val textColor = if(receipt.isDone) Color(0xFF606060) else Color(0xFF000000)
+    val backgroundColor = if(receipt.order.isDone) Color(0xFFE8F5E9) else Color(0xFFA5D6A7)
+    val textColor = if(receipt.order.isDone) Color(0xFF606060) else Color(0xFF000000)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -163,12 +174,12 @@ fun ReceiptCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ){
                 Text(
-                    text = receipt.orderTime.replace("-", "."),
+                    text = receipt.order.orderTime.replace("-", "."),
                     fontSize = 24.sp,
                 )
 
                 Text(
-                    text = "T${receipt.orderTable}",
+                    text = "T${receipt.order.orderTable}",
                     fontSize = 24.sp,
                     modifier = Modifier.padding(start = 10.dp)
                 )
@@ -180,12 +191,18 @@ fun ReceiptCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ){
-                Text("주문 번호 : ${receipt.parentId}")
+                Text("주문 번호 : ${receipt.order.parentId}")
                 Text(
-                    "${receipt.price}원",
+                    "${receipt.totalPrice}원",
                     fontSize = 18.sp
                 )
             }
         }
     }
 }
+
+data class Receipt(
+    @Embedded
+    val order: Order,
+    val totalPrice : Int
+)

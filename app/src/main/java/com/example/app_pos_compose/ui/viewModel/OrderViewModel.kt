@@ -12,6 +12,7 @@ import com.example.app_pos_compose.data.Order
 import com.example.app_pos_compose.data.OrderRepository
 import com.example.app_pos_compose.ui.MenuInfo
 import com.example.app_pos_compose.ui.OrderInfo
+import com.example.app_pos_compose.ui.Receipt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,7 +34,7 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
 
     var uiState by mutableStateOf(OrderUiState())
 
-    fun getOrderList(firstOrder : Int) {
+    fun updateOrderList(firstOrder : Int) {
         orderRepository.getOrderByParentId(firstOrder).onEach { orders ->
             _orderList.value = orders.groupBy {
                 it.menu
@@ -46,13 +47,26 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
         }.launchIn(CoroutineScope(Dispatchers.IO))
     }
 
-    private val _receiptList = orderRepository.getOrderGroupByParentId()
+    suspend fun getOrderList(firstOrder: Int): List<OrderInfo> {
+        return orderRepository.getOrderByParentId(firstOrder)
+            .first()
+            .groupBy { it.menu }
+            .map { (menu, order) ->
+                OrderInfo(
+                    menuInfo = MenuInfo(menu, order[0].price),
+                    quantity = mutableIntStateOf(order.sumOf { it.quantity })
+                )
+            }
+    }
+
+
+    private val _receiptList = orderRepository.getReceiptGroupByParentId()
         .stateIn(
             scope = CoroutineScope(Dispatchers.IO), // 실행할 CoroutineScope
             started = SharingStarted.Eagerly,      // 즉시 실행
             initialValue = listOf()                // 초기값 설정
         )
-    val receiptList: StateFlow<List<Order>> = _receiptList
+    val receiptList: StateFlow<List<Receipt>> = _receiptList
 
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -107,16 +121,16 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
         )
     }
 
-    fun updateSelectedReceipt(order: Order){
+    fun updateSelectedReceipt(receipt: Receipt){
         uiState = uiState.copy(
-            selectedReceipt = order
+            selectedReceipt = receipt
         )
     }
 
     fun updateIsDone(firstOrder: Int){
         orderRepository.updateIsDone(firstOrder)
     }
-    
+
     //UI에서 코루틴 범위 사용
     suspend fun deleteOrder(order: Order){
         orderRepository.deleteItem(order)
@@ -154,7 +168,7 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
 data class OrderUiState(
     val selectedOrder : OrderInfo? = null,
     val timeOfFirstOrder : String? = null,
-    val selectedReceipt : Order? = null
+    val selectedReceipt : Receipt? = null,
 )
 
 

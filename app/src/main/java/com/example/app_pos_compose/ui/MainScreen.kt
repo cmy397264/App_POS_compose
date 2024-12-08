@@ -2,7 +2,6 @@ package com.example.app_pos_compose.ui
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.app_pos_compose.data.AppViewModelProvider
 import com.example.app_pos_compose.ui.viewModel.UiViewModel
@@ -55,40 +56,60 @@ fun MainScreen(
                             .padding(10.dp)
                     )
                 }
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 5.dp,
+                    color = Color(0xFFA5D6A7)
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth()
-                        .height(48.dp)
-                        .border(1.dp, color = Color.Black),
+                        .height(48.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ){
                     Text(
                         text = "table",
                         textAlign = TextAlign.Center,
+                        fontSize = 18.sp,
                         modifier = Modifier.width(120.dp)
                             .height(40.dp)
                             .clickable { uiViewModel.updateTab(TabNum.Table.ordinal) }
                             .padding(vertical = 8.dp)
                     )
-                    VerticalDivider(modifier = Modifier.height(48.dp))
+                    VerticalDivider(
+                        modifier = Modifier.height(48.dp),
+                        thickness = 1.dp,
+                        color = Color(0xFFA5D6A7)
+                    )
                     Text(
                         text = "receipt",
                         textAlign = TextAlign.Center,
+                        fontSize = 18.sp,
                         modifier = Modifier.width(120.dp)
                             .height(40.dp)
                             .clickable { uiViewModel.updateTab(TabNum.Receipt.ordinal) }
                             .padding(vertical = 8.dp)
                     )
-                    VerticalDivider(modifier = Modifier.height(48.dp))
+                    VerticalDivider(
+                        modifier = Modifier.height(48.dp),
+                        thickness = 1.dp,
+                        color = Color(0xFFA5D6A7)
+                    )
                     Text(
                         text = "setting",
                         textAlign = TextAlign.Center,
+                        fontSize = 18.sp,
                         modifier = Modifier.width(120.dp)
                             .height(40.dp)
                             .clickable { uiViewModel.updateTab(TabNum.Setting.ordinal) }
                             .padding(vertical = 8.dp)
                     )
                 }
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 5.dp,
+                    color = Color(0xFFA5D6A7)
+                )
             }
         }
     ) {innerPadding ->

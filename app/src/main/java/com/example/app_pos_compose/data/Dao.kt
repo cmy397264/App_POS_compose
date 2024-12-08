@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.example.app_pos_compose.ui.Receipt
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -105,8 +106,8 @@ interface OrderDao {
     @Query("SELECT * FROM `order` WHERE menu = :menu and parentId = :parentId ORDER BY id DESC LIMIT 1")
     fun getOrderByMenuAndParentId(menu : String, parentId : Int) : Flow<Order>
 
-    @Query("SELECT * FROM `order` group by parentId order by id desc")
-    fun getOrderGroupByParentId() : Flow<List<Order>>
+    @Query("SELECT *, sum(price * quantity) as totalPrice FROM `order` group by parentId order by id desc")
+    fun getReceiptGroupByParentId() : Flow<List<Receipt>>
 
     @Query("SELECT orderTime FROM `order` WHERE id = :firstOrder")
     fun getFirstOrderTime(firstOrder : Int) : Flow<String>

@@ -1,5 +1,6 @@
 package com.example.app_pos_compose.data
 
+import com.example.app_pos_compose.ui.Receipt
 import kotlinx.coroutines.flow.Flow
 
 interface MenuRepo {
@@ -42,5 +43,5 @@ interface OrderRepo {
     fun getPriceByParentId(id : Int) : Flow<Int>
     fun getIsDoneByName(menu : String) : Flow<Int>
     fun deleteAll()
-    fun getOrderGroupByParentId() : Flow<List<Order>>
+    fun getReceiptGroupByParentId() : Flow<List<Receipt>>
 }

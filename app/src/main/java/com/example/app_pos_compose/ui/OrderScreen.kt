@@ -18,9 +18,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -82,7 +83,7 @@ fun OrderScreen(
                                     }
                                     val price = orderViewModel.getPriceById(fo)
                                     onClickSubmitButton(tableNum.toInt(), price)
-                                    orderViewModel.getOrderList(fo)
+                                    orderViewModel.updateOrderList(fo)
                                 }
 
                                 onClickCancelButton()
@@ -109,7 +110,10 @@ fun OrderScreen(
                 Modifier.padding(start = 10.dp)
             )
             MenuUi(onClick = { menuInfo: MenuInfo -> addOrder(orderList, menuInfo) })
-            HorizontalDivider(thickness = 2.dp)
+            HorizontalDivider(
+                thickness = 2.dp,
+                color = Color(0xFFA5D6A7)
+            )
             Spacer(modifier = Modifier.height(10.dp))
             Text(text = tableNum + "번 테이블 주문 목록")
             OrderListUi(
@@ -158,6 +162,9 @@ fun MenuCard(
     Card(
         modifier = Modifier.padding(10.dp)
             .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE8F5E9)
+        )
     ) {
         Column(
             modifier = Modifier
@@ -188,7 +195,8 @@ fun OrderListUi(
     OrderCellTemplate("메뉴", "수량", "가격", "금액")
 
     LazyColumn(
-        modifier = modifier.height(height.dp),
+        modifier = modifier.height(height.dp)
+            .border(1.dp, color = Color.Black),
     ) {
         items(orderList.size) { index ->
             val onTapToUnit = {onTap(index) }
@@ -209,15 +217,14 @@ fun OrderCellTemplate(
 ){
     Row(
         modifier = Modifier.border(
-            width = 0.dp,
-            color = Color.Black,
-            shape = RoundedCornerShape(1.dp))
+            width = 1.dp,
+            color = Color.Black)
             .padding(horizontal = 10.dp)
     ) {
         Text(
             text = firstColumn,
             fontSize = 18.sp,
-            modifier = Modifier.weight(2f)
+            modifier = Modifier.weight(3f)
         )
         Text(
             text = secondColumn,
@@ -229,7 +236,7 @@ fun OrderCellTemplate(
             text = thirdColumn,
             fontSize = 18.sp,
             textAlign = TextAlign.End,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(2f)
         )
         Text(
             text = fourthColumn,
@@ -240,10 +247,14 @@ fun OrderCellTemplate(
     }
 }
 
+@Preview(showBackground = true)
 @Composable
 fun OrderCell(
     modifier: Modifier = Modifier,
-    orderInfo: OrderInfo,
+    orderInfo: OrderInfo = OrderInfo(
+        MenuInfo("PreView", 5000),
+        mutableIntStateOf(1)
+    ),
     onTap: () -> Unit = {},
 ) {
     Row(
@@ -254,7 +265,7 @@ fun OrderCell(
     ) {
         Text(text = orderInfo.menuInfo.name,
             fontSize = 18.sp,
-            modifier = modifier.weight(6f))
+            modifier = modifier.weight(3f))
         Text(text = orderInfo.quantity.value.toString(),
             fontSize = 18.sp,
             textAlign = TextAlign.End,
@@ -263,12 +274,14 @@ fun OrderCell(
             fontSize = 18.sp,
             textAlign = TextAlign.End,
             modifier = modifier.weight(2f))
-        Text(text = "${orderInfo.quantity.value * orderInfo.menuInfo.price} 원",
+        Text(text = "${orderInfo.quantity.value * orderInfo.menuInfo.price}",
             fontSize = 18.sp,
             textAlign = TextAlign.End,
-            modifier = modifier.weight(3f))
+            modifier = modifier.weight(2f))
     }
-    HorizontalDivider(thickness = 1.dp)
+    HorizontalDivider(
+        thickness = 1.dp,
+    )
 }
 
 
