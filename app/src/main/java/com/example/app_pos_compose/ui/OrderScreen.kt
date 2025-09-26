@@ -81,7 +81,7 @@ fun OrderScreen(
                                             테이블의 첫 주문번호가 존재하지 않는다면
                                             insert한 order들의 firstOrder를 처음 주문 id로 바꾸고 사용한 id를 리턴
                                          */
-                                        fo = orderViewModel.setLastInsertOrder(orderList.size)
+                                        fo = orderViewModel.updateFO(orderList.size)
                                         onFirstOrderChange(tableNum.toInt(), fo)
                                     }
                                     val price = orderViewModel.getPriceById(fo)
