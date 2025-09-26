@@ -99,7 +99,7 @@ class OrderViewModel(private val orderRepository: OrderRepository) : ViewModel()
     }
     
     //UI에서 사용
-    suspend fun setLastInsertOrder(size : Int) : Int {
+    suspend fun updateFO(size : Int) : Int {
         val last = getLastInsertOrder()
         val first = last - size + 1
         orderRepository.updateFirstOrder(first, last)
