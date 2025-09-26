@@ -360,33 +360,29 @@ fun TableOrderDialog(
                                 if(newQuantity.toInt() != selectedOrder.quantity.value) {
                                     coroutineScope.launch {
                                         withContext(Dispatchers.IO) {
-                                            if (newQuantity.toInt() == 0) {//quantity를 0으로 설정하면 해당 테이블에서 입력된 메뉴를 전부 삭제한다.
-                                                orderViewModel.deleteAllOrderByName(
-                                                    selectedOrder.menuInfo.name,
-                                                    firstOrder
-                                                )
-                                            } else if (newQuantity.toInt() > selectedOrder.quantity.value) {//기존 quantity보다 수정값이 더 높다면 주문을 추가한다.
+                                            if (newQuantity.toInt() == 0) {
+                                                orderViewModel.deleteAllOrderByName(selectedOrder.menuInfo.name, firstOrder)
+                                            } else if (newQuantity.toInt() > selectedOrder.quantity.value) {
                                                 orderViewModel.insertOrder(
                                                     selectedOrder,
                                                     newQuantity.toInt() - selectedOrder.quantity.value,
                                                     tableNum,
                                                     firstOrder
                                                 )
-                                            } else {//기존 quantity보다 수정값이 낮다면 마지막 주문을 불러와 quantity를 불러온다
-                                                var order =
-                                                    orderViewModel.getOrderByMenuAndParentId(
+                                            } else {
+                                                //기존 quantity보다 수정값이 낮다면 마지막 주문을 불러와 quantity를 불러온다
+                                                var order = orderViewModel.getOrderByMenuAndParentId(
                                                         selectedOrder.menuInfo.name,
                                                         firstOrder
                                                     )
-                                                while (newQuantity.toInt() - order.quantity >= 0) {//불러온 값이 수정값보다 작다면
-                                                    newQuantity =
-                                                        (newQuantity.toInt() - order.quantity).toString() //수정값을 불러온 값만큼 감소시키고
-                                                    orderViewModel.deleteOrder(order)//해당 테이블에서 마지막으로 주문된 주문을 삭제한다.
-                                                    order =
-                                                        orderViewModel.getOrderByMenuAndParentId(
-                                                            selectedOrder.menuInfo.name,
-                                                            firstOrder
-                                                        )//마지막 주문을 새로 불러온다.
+                                                while (newQuantity.toInt() - order.quantity >= 0) {
+                                                    /*
+                                                        불러온 값이 수정값보다 작다면 수정값을 불러온 값만큼 감소시키고
+                                                        해당 테이블에서 마지막으로 주문된 주문을 삭제하고 마지막 주문을 새로 불러온다.
+                                                     */
+                                                    newQuantity = (newQuantity.toInt() - order.quantity).toString()
+                                                    orderViewModel.deleteOrder(order)
+                                                    order = orderViewModel.getOrderByMenuAndParentId(selectedOrder.menuInfo.name, firstOrder)
                                                 }
                                                 order.quantity = newQuantity.toInt()
                                                 orderViewModel.updateOrder(order)
