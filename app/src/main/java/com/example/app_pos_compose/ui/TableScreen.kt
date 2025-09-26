@@ -91,9 +91,6 @@ fun MainNavigator(
                 orderViewModel = orderViewModel,
                 tableNum = tableViewModel.uiState.tableNum!!,
                 firstOrder = tableViewModel.uiState.firstOrder,
-                onFirstOrderChange = { tableNum : Int, firstOrder : Int ->
-                    tableViewModel.updateFirstOrder(tableNum, firstOrder)
-                    tableViewModel.changeFirstOrder(firstOrder) },
                 onClickSubmitButton = { tableNum, price : Int ->
                     tableViewModel.updatePrice(tableNum, price) },
                 onClickCancelButton = {
